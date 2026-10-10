@@ -31,7 +31,7 @@
           <p class="text-2xl font-extrabold text-blue-700">{{ formatBaht(item.effective_price) }}</p>
         </div>
         <button
-          v-if="item.item_type !== 'exam' && !item.purchased"
+          v-if="!item.purchased"
           type="button"
           class="mt-5 inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600"
           @click="addCatalog(item)"
@@ -39,7 +39,6 @@
           <LearnIcon name="cart" class="h-4 w-4" />
           {{ inCart ? 'อยู่ในตะกร้า' : 'ใส่ตะกร้า' }}
         </button>
-        <p v-else-if="item.item_type === 'exam'" class="mt-5 text-sm font-semibold text-slate-400">ยังไม่เปิดให้สั่งซื้อ</p>
       </div>
       <div v-if="item.description" class="md:col-span-2 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
         <h2 class="font-extrabold text-slate-900">รายละเอียด</h2>
@@ -402,7 +401,7 @@ watch(trialVideos, (videos) => {
 
 const inCart = computed(() => {
   const item = props.item
-  if (!item || item.item_type === 'exam') return 0
+  if (!item) return 0
   return quantityOf(item.item_type, item.id)
 })
 

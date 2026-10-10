@@ -50,8 +50,8 @@
     </section>
 
     <section id="exams" class="mx-auto max-w-6xl px-4 py-10 md:px-6">
-      <CatalogGrid title="ข้อสอบ" description="ข้อสอบที่เปิดแสดงแยกจากคอร์ส" :items="exams" :pending="examsPending"
-        :failed="examsFailed" heading="h2" icon="exam" chip="bg-amber-100 text-amber-600" />
+      <CatalogGrid title="ข้อสอบ" description="ข้อสอบที่เปิดขายแยกจากคอร์ส" :items="exams" :pending="examsPending"
+        :failed="examsFailed" purchasable heading="h2" icon="exam" chip="bg-amber-100 text-amber-600" />
     </section>
 
     <section id="books" class="mx-auto max-w-6xl px-4 py-10 md:px-6">

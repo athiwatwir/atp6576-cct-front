@@ -21,7 +21,7 @@ export interface StoreBook {
   purchased?: boolean
 }
 
-export type CartItemType = 'course' | 'curriculum' | 'book'
+export type CartItemType = 'course' | 'curriculum' | 'exam' | 'book'
 
 export interface VideoWatchProgress {
   status: 'unwatched' | 'in_progress' | 'completed'
@@ -124,7 +124,7 @@ function lineLimit(stock: number | null) {
 function isCartLine(value: unknown): value is CartLine {
   if (!value || typeof value !== 'object') return false
   const item = value as CartLine
-  return (item.type === 'book' || item.type === 'course' || item.type === 'curriculum')
+  return (item.type === 'book' || item.type === 'course' || item.type === 'curriculum' || item.type === 'exam')
     && Number.isInteger(item.id)
     && typeof item.name === 'string'
     && typeof item.unit_price === 'number'
@@ -216,10 +216,6 @@ export function useCart() {
   }
 
   function addCatalog(item: CatalogItem) {
-    if (item.item_type === 'exam') {
-      notify('ข้อสอบยังไม่เปิดให้สั่งซื้อ')
-      return
-    }
     const existing = items.value.find(line => line.type === item.item_type && line.id === item.id)
     if (existing) {
       existing.unit_price = item.effective_price

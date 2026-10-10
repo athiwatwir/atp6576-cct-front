@@ -66,7 +66,7 @@
             ดูวิดีโอทดลองเรียน
           </NuxtLink>
           <button
-            v-if="purchasable && item.item_type !== 'exam'"
+            v-if="purchasable && !item.purchased"
             type="button"
             class="inline-flex items-center justify-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600"
             @click="addCatalog(item)"
@@ -74,7 +74,6 @@
             <LearnIcon name="cart" class="h-4 w-4" />
             {{ inCart(item) ? 'อยู่ในตะกร้า' : 'ใส่ตะกร้า' }}
           </button>
-          <p v-else-if="item.item_type === 'exam'" class="text-sm font-semibold text-slate-400">ยังไม่เปิดให้สั่งซื้อ</p>
         </div>
       </article>
     </div>
@@ -102,7 +101,6 @@ withDefaults(defineProps<{
 const { count, addCatalog, quantityOf } = useCart()
 
 function inCart(item: CatalogItem) {
-  if (item.item_type === 'exam') return 0
   return quantityOf(item.item_type, item.id)
 }
 

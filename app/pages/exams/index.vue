@@ -2,10 +2,11 @@
   <div class="mx-auto max-w-6xl px-4 py-8 md:px-6">
     <CatalogGrid
       title="ข้อสอบ"
-      description="ข้อสอบที่เปิดแสดงแยกจากคอร์สทั้งหมด ยังสั่งซื้อผ่านตะกร้าไม่ได้"
+      description="ข้อสอบที่เปิดขายแยกจากคอร์สทั้งหมด"
       :items="items"
       :pending="pending"
       :failed="failed"
+      purchasable
       icon="exam"
       chip="bg-amber-100 text-amber-600"
     />
