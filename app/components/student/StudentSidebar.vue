@@ -4,20 +4,10 @@
     :class="open ? 'translate-x-0' : '-translate-x-full'"
   >
     <div class="flex items-center gap-2 px-5 pt-6 pb-4">
-      <NuxtLink to="/home" class="flex items-center gap-2" @click="emit('close')">
-        <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-600 text-white">
-          <svg viewBox="0 0 24 24" class="h-6 w-6" fill="currentColor" aria-hidden="true">
-            <path d="M3 17.5 12 4l9 13.5h-4.2L12 10.2 7.2 17.5z" />
-          </svg>
-        </span>
-        <span class="leading-tight">
-          <span class="block text-base font-bold text-blue-700">ClickClass</span>
-          <span class="block text-xs font-semibold text-sky-500">Tutor</span>
-        </span>
-      </NuxtLink>
+      <HeaderLogo to="/home" image-class="h-12 w-auto max-w-[180px]" @click="emit('close')" />
     </div>
 
-    <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-6">
+    <nav class="flex-1 space-y-1 overflow-y-auto px-3 pb-4">
       <NuxtLink
         v-for="item in studentNav"
         :key="item.to"
@@ -32,6 +22,22 @@
         {{ item.label }}
       </NuxtLink>
     </nav>
+
+    <NuxtLink
+      to="/profile"
+      class="mx-3 mb-4 flex items-center gap-3 rounded-2xl px-3 py-3 ring-1 hover:bg-blue-50"
+      :class="route.path === '/profile' ? 'bg-blue-50 ring-blue-200' : 'ring-blue-50'"
+      @click="emit('close')"
+    >
+      <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+        <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="h-full w-full object-cover">
+        <span v-else>{{ initial }}</span>
+      </span>
+      <span class="min-w-0">
+        <span class="block truncate text-sm font-bold text-slate-800">{{ user?.name || 'นักเรียน' }}</span>
+        <span class="block truncate text-xs text-slate-400">{{ user?.school_name || user?.email || 'แก้ไขโปรไฟล์' }}</span>
+      </span>
+    </NuxtLink>
   </aside>
 </template>
 
@@ -47,6 +53,8 @@ const emit = defineEmits<{
 }>()
 
 const route = useRoute()
+const { user } = useAuth()
+const initial = computed(() => (user.value?.name || 'น').trim().charAt(0))
 
 function isActive(path: string) {
   return route.path === path || route.path.startsWith(`${path}/`)

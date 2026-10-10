@@ -10,6 +10,7 @@ export function useApi() {
     onRequest({ options }) {
       const headers = new Headers(options.headers)
       headers.set('Accept', 'application/json')
+      headers.set('X-Api-Key', config.public.apiKey)
       if (token.value) headers.set('Authorization', `Bearer ${token.value}`)
       options.headers = headers
     },

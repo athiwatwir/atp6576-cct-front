@@ -35,11 +35,16 @@
     </button>
 
     <div class="flex items-center gap-2">
-      <span class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-bold text-blue-700">
-        <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="h-full w-full object-cover">
-        <span v-else>{{ initial }}</span>
-      </span>
-      <span class="hidden text-sm font-semibold text-slate-700 sm:block">{{ user?.name || 'นักเรียน' }}</span>
+      <NuxtLink to="/profile" class="flex items-center gap-2 rounded-full py-1 pe-2 hover:bg-blue-50">
+        <span class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-sm font-bold text-blue-700">
+          <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="h-full w-full object-cover">
+          <span v-else>{{ initial }}</span>
+        </span>
+        <span class="hidden sm:block">
+          <span class="block text-sm font-semibold leading-tight text-slate-700">{{ user?.name || 'นักเรียน' }}</span>
+          <span v-if="user?.school_name" class="block max-w-40 truncate text-xs text-slate-400">{{ user.school_name }}</span>
+        </span>
+      </NuxtLink>
       <button type="button" class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100" @click="logout">
         ออกจากระบบ
       </button>

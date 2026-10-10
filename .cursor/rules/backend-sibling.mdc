@@ -1,0 +1,17 @@
+---
+description: แก้ backend ที่ atp6576-cct-back ได้ และต้องอัปเดตเอกสาร API ด้วย
+alwaysApply: true
+---
+
+# Backend ที่แก้ได้
+
+โปรเจกต์นักเรียนหน้าร้านนี้อยู่คู่กับ Laravel ที่ `D:\projects\Git\atp6576-cct-back` เมื่องานต้องเพิ่มหรือแก้ API ให้แก้ backend นั้นได้เลย ไม่ต้องรอให้ผู้ใช้สั่งแยก
+
+ทุกครั้งที่พฤติกรรม API เปลี่ยน ให้อัปเดต `docs/student-api.md` ในโปรเจกต์นี้ในงานเดียวกัน เอกสารต้องตรงกับ response จริง ทั้งฟิลด์ ตัวอย่าง JSON และลำดับการเรียก
+
+```text
+แก้ StudentResource ให้ learning มี exams
+→ อัปเดตตัวอย่าง GET /profile ใน docs/student-api.md ให้มี exams ด้วย
+```
+
+อย่าคัดลอก secret จาก `.env` ของ backend มาใส่ในแชทหรือในเอกสาร

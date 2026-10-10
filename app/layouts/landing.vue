@@ -1,8 +1,12 @@
 <template>
-  <div class="min-h-screen bg-[#f7fbff] text-slate-800">
+  <div class="flex min-h-screen flex-col bg-[#f7fbff] text-slate-800">
     <LandingHeader v-if="showChrome" />
-    <slot />
+    <EmailVerifyBanner v-if="showChrome" />
+    <div class="flex-1">
+      <slot />
+    </div>
     <LandingFooter v-if="showChrome" />
+    <CartNotice />
   </div>
 </template>
 
