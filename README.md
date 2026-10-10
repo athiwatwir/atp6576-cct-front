@@ -1,8 +1,8 @@
 # atp6576-cct-front
 
-Nuxt app styled with the [TailAdmin](https://tailadmin.com) free Vue dashboard (Tailwind CSS v4).
+Nuxt storefront for ClickClass Tutor, styled with Tailwind CSS v4.
 
-New pages use the TailAdmin admin shell by default (`app/layouts/default.vue`). Auth screens use `app/layouts/auth.vue`. Shared UI lives in `app/components` and the design tokens live in `app/assets/css/main.css`.
+Public pages use `app/layouts/landing.vue`. Signed-in pages such as the classroom and profile use `app/layouts/default.vue`, which adds the same header and footer.
 
 ## Setup
 
