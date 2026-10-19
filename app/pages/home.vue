@@ -32,6 +32,9 @@
               <span class="min-w-0 flex-1">
                 <span class="block truncate text-sm font-bold text-slate-900">{{ item.name }}</span>
                 <span class="block text-xs font-semibold text-slate-500">{{ item.kindLabel }}</span>
+                <span class="block text-xs" :class="expiringSoon(item.expires_at) ? 'font-bold text-amber-600' : 'text-slate-400'">
+                  {{ item.expires_at ? `ใช้ได้ถึง ${formatThaiDate(item.expires_at)}` : 'ไม่จำกัดเวลา' }}
+                </span>
               </span>
               <span class="shrink-0 text-xs font-bold text-blue-700">เข้าเรียน</span>
             </NuxtLink>
@@ -65,6 +68,14 @@ const groups = computed(() => [
     items: classroom.value.exams,
   },
 ])
+
+const soonMs = 7 * 24 * 60 * 60 * 1000
+
+function expiringSoon(value: string | null | undefined) {
+  if (!value) return false
+  const time = new Date(value).getTime()
+  return Number.isFinite(time) && time - Date.now() < soonMs
+}
 
 function coverClass(kind: string) {
   if (kind === 'exam') return 'bg-amber-100 text-amber-600'

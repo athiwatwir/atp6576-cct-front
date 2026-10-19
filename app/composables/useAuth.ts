@@ -11,6 +11,7 @@ export interface LearningItem {
   name: string
   slug: string
   thumbnail_url?: string | null
+  expires_at?: string | null
 }
 
 export interface ClassroomItem extends LearningItem {
@@ -79,8 +80,8 @@ export function useAuth() {
 
   const classroom = computed(() => {
     const learning = user.value?.learning
-    const courses = asClassroom(learning?.courses, 'course', 'คอร์ส', '/courses')
-    const curriculums = asClassroom(learning?.curriculums, 'curriculum', 'หลักสูตร', '/curriculums')
+    const courses = asClassroom(learning?.courses, 'course', 'คอร์ส', '/learn')
+    const curriculums = asClassroom(learning?.curriculums, 'curriculum', 'หลักสูตร', '/learn/curriculums')
     const exams = asClassroom(learning?.exams, 'exam', 'ข้อสอบ', '/exams')
 
     return {

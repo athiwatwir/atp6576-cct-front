@@ -1,21 +1,9 @@
 <template>
-  <NuxtLink :to="to" class="inline-flex items-center" :class="linkClass">
-    <img
-      v-if="variant !== 'dark'"
-      :class="[imageClass, variant === 'auto' ? 'dark:hidden' : '']"
-      src="/images/logo/logo.webp"
-      alt="ClickClass Tutor"
-      width="180"
-      height="66"
-    >
-    <img
-      v-if="variant !== 'light'"
-      :class="[imageClass, variant === 'auto' ? 'hidden dark:block' : '']"
-      src="/images/logo/logo-dark.webp"
-      alt="ClickClass Tutor"
-      width="180"
-      height="66"
-    >
+  <NuxtLink :to="to" class="inline-flex shrink-0 items-center" :class="linkClass">
+    <img v-if="variant !== 'dark'" :class="['max-w-none object-contain', imageClass, variant === 'auto' ? 'dark:hidden' : '']"
+      src="/images/logo/logo.webp" alt="ClickClass Tutor" width="1099" height="404">
+    <img v-if="variant !== 'light'" :class="['max-w-none object-contain', imageClass, variant === 'auto' ? 'hidden dark:block' : '']"
+      src="/images/logo/logo-dark.webp" alt="ClickClass Tutor" width="1099" height="404">
   </NuxtLink>
 </template>
 

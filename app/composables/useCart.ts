@@ -76,6 +76,15 @@ export interface CatalogCourseRef {
   thumbnail_url: string | null
 }
 
+export interface PricePlan {
+  id: number
+  name: string
+  duration_days: number | null
+  price: number
+  sale_price: number | null
+  effective_price: number
+}
+
 export interface CatalogItem {
   item_type: 'course' | 'curriculum' | 'exam'
   id: number
@@ -88,8 +97,10 @@ export interface CatalogItem {
   price: number
   sale_price: number | null
   effective_price: number
+  price_plans?: PricePlan[]
   is_featured?: boolean
   purchased?: boolean
+  access_expires_at?: string | null
   category?: NamedRef | null
   subject?: NamedRef | null
   instructor?: NamedRef | null
@@ -112,10 +123,35 @@ export interface CartLine {
   unit_price: number
   quantity: number
   stock: number | null
+  plan_id?: number | null
+  plans?: PricePlan[]
+}
+
+export interface CheckoutItemInput {
+  type: CartItemType
+  id: number
+  quantity: number
+  plan_id?: number
 }
 
 const STORAGE_KEY = 'cct-cart'
 let noticeTimer = 0
+
+export function planDurationLabel(plan: Pick<PricePlan, 'duration_days'>) {
+  return plan.duration_days ? `ใช้งานได้ ${plan.duration_days} วันหลังชำระ` : 'ใช้งานได้ไม่จำกัดเวลา'
+}
+
+export function hasPlanChoice(item: Pick<CatalogItem, 'price_plans'>) {
+  return (item.price_plans?.length ?? 0) > 1
+}
+
+export function canRenew(item: Pick<CatalogItem, 'purchased' | 'access_expires_at'>) {
+  return Boolean(item.purchased && item.access_expires_at)
+}
+
+export function selectedPlan(line: Pick<CartLine, 'plan_id' | 'plans'>) {
+  return line.plans?.find(plan => plan.id === line.plan_id) ?? null
+}
 
 function lineLimit(stock: number | null) {
   return Math.min(stock ?? 99, 99)
@@ -215,14 +251,29 @@ export function useCart() {
     notify(`ใส่ «${book.name}» ในตะกร้าแล้ว`)
   }
 
-  function addCatalog(item: CatalogItem) {
+  function planOf(type: CartItemType, id: number) {
+    return items.value.find(line => line.type === type && line.id === id)?.plan_id ?? null
+  }
+
+  function addCatalog(item: CatalogItem, planId?: number | null) {
+    const plans = item.price_plans ?? []
+    const plan = plans.find(entry => entry.id === planId) ?? (plans.length === 1 ? plans[0] : undefined)
+    if (plans.length > 1 && !plan) {
+      notify(`กรุณาเลือกแพ็กเกจของ «${item.name}»`)
+      return false
+    }
+
+    const unitPrice = plan?.effective_price ?? item.effective_price
     const existing = items.value.find(line => line.type === item.item_type && line.id === item.id)
     if (existing) {
-      existing.unit_price = item.effective_price
+      const changed = (existing.plan_id ?? null) !== (plan?.id ?? null)
+      existing.unit_price = unitPrice
       existing.name = item.name
       existing.thumbnail_url = item.thumbnail_url
-      notify(`«${item.name}» อยู่ในตะกร้าแล้ว`)
-      return
+      existing.plan_id = plan?.id ?? null
+      existing.plans = plans
+      notify(changed ? `เปลี่ยน «${item.name}» เป็น ${plan?.name} แล้ว` : `«${item.name}» อยู่ในตะกร้าแล้ว`)
+      return true
     }
     items.value.push({
       type: item.item_type,
@@ -230,11 +281,51 @@ export function useCart() {
       slug: item.slug,
       name: item.name,
       thumbnail_url: item.thumbnail_url,
-      unit_price: item.effective_price,
+      unit_price: unitPrice,
       quantity: 1,
       stock: null,
+      plan_id: plan?.id ?? null,
+      plans,
     })
-    notify(`ใส่ «${item.name}» ในตะกร้าแล้ว`)
+    notify(`ใส่ «${item.name}»${plan && plans.length > 1 ? ` (${plan.name})` : ''} ในตะกร้าแล้ว`)
+    return true
+  }
+
+  function setPlan(type: CartItemType, id: number, planId: number | null) {
+    const line = items.value.find(entry => entry.type === type && entry.id === id)
+    if (!line) return
+    line.plan_id = planId
+    const plan = selectedPlan(line)
+    if (plan) line.unit_price = plan.effective_price
+  }
+
+  function checkoutItems(): CheckoutItemInput[] {
+    return items.value.map(item => ({
+      type: item.type,
+      id: item.id,
+      quantity: item.quantity,
+      ...(item.type !== 'book' && item.plan_id ? { plan_id: item.plan_id } : {}),
+    }))
+  }
+
+  async function syncCatalogLines() {
+    if (!items.value.some(item => item.type !== 'book')) return
+    const { fetchAll } = useStorefront()
+    const response = await fetchAll<CatalogItem>('/catalog', { type: 'course,curriculum,exam' })
+    const byKey = new Map(response.data.map(entry => [`${entry.item_type}-${entry.id}`, entry]))
+    for (const line of items.value) {
+      if (line.type === 'book') continue
+      const fresh = byKey.get(`${line.type}-${line.id}`)
+      if (!fresh) continue
+      const plans = fresh.price_plans ?? []
+      line.name = fresh.name
+      line.slug = fresh.slug
+      line.thumbnail_url = fresh.thumbnail_url
+      line.plans = plans
+      if (line.plan_id && !plans.some(plan => plan.id === line.plan_id)) line.plan_id = null
+      if (!line.plan_id && plans.length === 1) line.plan_id = plans[0]!.id
+      line.unit_price = selectedPlan(line)?.effective_price ?? fresh.effective_price
+    }
   }
 
   function setQuantity(type: CartItemType, id: number, quantity: number) {
@@ -256,5 +347,5 @@ export function useCart() {
     couponCode.value = ''
   }
 
-  return { items, notice, count, subtotal, couponCode, quantityOf, canAdd, addBook, addCatalog, setQuantity, remove, clear }
+  return { items, notice, count, subtotal, couponCode, quantityOf, planOf, canAdd, addBook, addCatalog, setPlan, checkoutItems, syncCatalogLines, setQuantity, remove, clear }
 }

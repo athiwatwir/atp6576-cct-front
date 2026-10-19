@@ -5,41 +5,65 @@
       <p class="mt-2 text-sm text-slate-500">{{ quote?.requires_shipping ? 'รายการนี้ต้องระบุที่อยู่จัดส่ง' : 'ตรวจยอดก่อนยืนยันคำสั่งซื้อ' }}</p>
 
       <form class="mt-6 space-y-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100" @submit.prevent="submit">
+        <template v-if="!loggedIn">
+          <div class="rounded-2xl bg-blue-50 p-4 text-sm text-slate-700">
+            <p class="font-bold text-slate-900">สั่งซื้อได้เลยโดยไม่ต้องสมัครสมาชิก</p>
+            <p class="mt-1">กรอกอีเมลเพื่อรับคำสั่งซื้อ ถ้ายังไม่มีบัญชี ระบบจะสร้างบัญชีและส่งรหัสผ่านไปที่อีเมลนี้ เพื่อใช้เข้าห้องเรียนหลังชำระเงิน</p>
+            <NuxtLink :to="{ path: '/signin', query: { redirect: '/checkout' } }" class="mt-2 inline-flex font-bold text-blue-700">มีบัญชีอยู่แล้ว เข้าสู่ระบบ</NuxtLink>
+          </div>
+          <label class="block text-sm font-semibold text-slate-700">
+            อีเมล
+            <input v-model="form.email" type="email" required autocomplete="email" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal" @change="refreshQuote">
+          </label>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm font-semibold text-slate-700">
+              ชื่อ-นามสกุล
+              <input v-model="form.name" :required="Boolean(quote?.requires_shipping)" maxlength="150" autocomplete="name" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              เบอร์โทร
+              <input v-model="form.phone" type="tel" :required="Boolean(quote?.requires_shipping)" maxlength="30" autocomplete="tel" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+          </div>
+        </template>
+
         <template v-if="quote?.requires_shipping">
-        <label class="block text-sm font-semibold text-slate-700">
-          ชื่อผู้รับ
-          <input v-model="form.name" required maxlength="150" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
-        </label>
-        <label class="block text-sm font-semibold text-slate-700">
-          เบอร์โทร
-          <input v-model="form.phone" required maxlength="30" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
-        </label>
-        <label class="block text-sm font-semibold text-slate-700">
-          ที่อยู่
-          <input v-model="form.address_line1" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
-        </label>
-        <label class="block text-sm font-semibold text-slate-700">
-          ที่อยู่เพิ่มเติม
-          <input v-model="form.address_line2" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
-        </label>
-        <div class="grid gap-4 sm:grid-cols-2">
+          <template v-if="loggedIn">
+            <label class="block text-sm font-semibold text-slate-700">
+              ชื่อผู้รับ
+              <input v-model="form.name" required maxlength="150" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              เบอร์โทร
+              <input v-model="form.phone" required maxlength="30" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+          </template>
           <label class="block text-sm font-semibold text-slate-700">
-            ตำบล/แขวง
-            <input v-model="form.subdistrict" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            ที่อยู่
+            <input v-model="form.address_line1" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
-            อำเภอ/เขต
-            <input v-model="form.district" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            ที่อยู่เพิ่มเติม
+            <input v-model="form.address_line2" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
           </label>
-          <label class="block text-sm font-semibold text-slate-700">
-            จังหวัด
-            <input v-model="form.province" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
-          </label>
-          <label class="block text-sm font-semibold text-slate-700">
-            รหัสไปรษณีย์
-            <input v-model="form.postal_code" required inputmode="numeric" maxlength="5" pattern="[0-9]{5}" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
-          </label>
-        </div>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm font-semibold text-slate-700">
+              ตำบล/แขวง
+              <input v-model="form.subdistrict" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              อำเภอ/เขต
+              <input v-model="form.district" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              จังหวัด
+              <input v-model="form.province" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              รหัสไปรษณีย์
+              <input v-model="form.postal_code" required inputmode="numeric" maxlength="5" pattern="[0-9]{5}" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+          </div>
         </template>
         <label class="block text-sm font-semibold text-slate-700">
           หมายเหตุ
@@ -62,7 +86,10 @@
       <template v-else-if="quote">
         <ul class="mt-4 space-y-3">
           <li v-for="item in quote.items" :key="`${item.type}-${item.id}`" class="flex justify-between gap-3 text-sm">
-            <span>{{ item.name }} × {{ item.quantity }}</span>
+            <span>
+              {{ item.name }} × {{ item.quantity }}
+              <span v-if="item.plan" class="block text-xs text-slate-400">{{ planDurationLabel(item.plan) }}</span>
+            </span>
             <span class="shrink-0 font-semibold">{{ formatBaht(item.total_price) }}</span>
           </li>
         </ul>
@@ -85,12 +112,15 @@
           </div>
         </dl>
       </template>
+      <p v-else-if="!loggedIn && !validEmail" class="mt-4 text-sm text-slate-500">กรอกอีเมลเพื่อคำนวณยอด</p>
       <p v-else class="mt-4 text-sm text-slate-500">ยังคำนวณยอดไม่ได้</p>
     </aside>
   </section>
 </template>
 
 <script setup lang="ts">
+import { planDurationLabel } from '@/composables/useCart'
+
 definePageMeta({ layout: 'landing' })
 
 useHead({ title: 'ยืนยันคำสั่งซื้อ | ClickClass Tutor' })
@@ -102,6 +132,7 @@ interface QuoteItem {
   quantity: number
   unit_price: number
   total_price: number
+  plan?: { id: number | null, name: string, duration_days: number | null } | null
 }
 
 interface Quote {
@@ -117,11 +148,20 @@ interface CreatedOrder {
   id: number
 }
 
+interface GuestOrderResponse {
+  order: CreatedOrder
+  guest_token: string
+  account_created: boolean
+  account_email_sent: boolean
+}
+
 const { api } = useApi()
 const { loggedIn, user } = useAuth()
-const { items, couponCode, clear } = useCart()
+const { items, couponCode, clear, checkoutItems } = useCart()
+const { remember, setNotice } = useGuestOrders()
 
 const form = reactive({
+  email: '',
   name: '',
   phone: '',
   address_line1: '',
@@ -138,13 +178,12 @@ const quoting = ref(false)
 const submitting = ref(false)
 const errorMessage = ref('')
 
-const ready = items.value.length > 0 && loggedIn.value
+const validEmail = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
 
-if (items.value.length === 0) {
+const missingPlan = items.value.some(item => item.type !== 'book' && (item.plans?.length ?? 0) > 1 && !item.plan_id)
+
+if (items.value.length === 0 || missingPlan) {
   await navigateTo('/cart')
-}
-else if (!loggedIn.value) {
-  await navigateTo({ path: '/signin', query: { redirect: '/checkout' } })
 }
 
 watch(user, (value) => {
@@ -153,38 +192,56 @@ watch(user, (value) => {
   if (!form.phone && value.phone) form.phone = value.phone
 }, { immediate: true })
 
+let quoteRequest = 0
+
 async function refreshQuote() {
   if (items.value.length === 0) return
-  quoting.value = true
+  const request = ++quoteRequest
   errorMessage.value = ''
+  if (!loggedIn.value && !validEmail.value) {
+    quote.value = null
+    return
+  }
+
+  quoting.value = true
   try {
-    const response = await api<{ data: Quote }>('/checkout/quote', {
+    const response = await api<{ data: Quote }>(loggedIn.value ? '/checkout/quote' : '/guest/checkout/quote', {
       method: 'POST',
       body: {
-        items: items.value.map(item => ({
-          type: item.type,
-          id: item.id,
-          quantity: item.quantity,
-        })),
+        ...(loggedIn.value ? {} : { email: form.email.trim() }),
+        items: checkoutItems(),
         coupon_code: couponCode.value.trim() || undefined,
       },
     })
-    quote.value = response.data
+    if (request === quoteRequest) quote.value = response.data
   }
   catch (error: unknown) {
+    if (request !== quoteRequest) return
     quote.value = null
-    if (apiStatus(error) === 401) {
-      await navigateTo({ path: '/signin', query: { redirect: '/checkout' } })
-      return
-    }
     errorMessage.value = apiErrorMessage(error, 'คำนวณยอดไม่สำเร็จ')
   }
   finally {
-    quoting.value = false
+    if (request === quoteRequest) quoting.value = false
   }
 }
 
-if (ready) await refreshQuote()
+if (loggedIn.value && items.value.length) await refreshQuote()
+
+function shippingBody() {
+  if (!quote.value?.requires_shipping) return {}
+  return {
+    shipping: {
+      name: form.name.trim(),
+      phone: form.phone.trim(),
+      address_line1: form.address_line1.trim(),
+      address_line2: form.address_line2.trim() || null,
+      subdistrict: form.subdistrict.trim() || null,
+      district: form.district.trim(),
+      province: form.province.trim(),
+      postal_code: form.postal_code.trim(),
+    },
+  }
+}
 
 async function submit() {
   if (!quote.value || submitting.value) return
@@ -195,37 +252,47 @@ async function submit() {
 
   submitting.value = true
   errorMessage.value = ''
+  const body = {
+    items: checkoutItems(),
+    notes: form.notes.trim() || null,
+    coupon_code: couponCode.value.trim() || undefined,
+    ...shippingBody(),
+  }
+
   try {
-    const response = await api<{ data: CreatedOrder }>('/orders', {
+    if (loggedIn.value) {
+      const response = await api<{ data: CreatedOrder }>('/orders', { method: 'POST', body })
+      clear()
+      await navigateTo(`/orders/${response.data.id}`)
+      return
+    }
+
+    const email = form.email.trim().toLowerCase()
+    const response = await api<{ data: GuestOrderResponse }>('/guest/orders', {
       method: 'POST',
       body: {
-        items: items.value.map(item => ({
-          type: item.type,
-          id: item.id,
-          quantity: item.quantity,
-        })),
-        notes: form.notes.trim() || null,
-        coupon_code: couponCode.value.trim() || undefined,
-        ...(quote.value.requires_shipping
-          ? {
-              shipping: {
-                name: form.name.trim(),
-                phone: form.phone.trim(),
-                address_line1: form.address_line1.trim(),
-                address_line2: form.address_line2.trim() || null,
-                subdistrict: form.subdistrict.trim() || null,
-                district: form.district.trim(),
-                province: form.province.trim(),
-                postal_code: form.postal_code.trim(),
-              },
-            }
-          : {}),
+        ...body,
+        email,
+        name: form.name.trim() || undefined,
+        phone: form.phone.trim() || undefined,
       },
     })
+    const result = response.data
+    remember(result.order.id, result.guest_token)
+    setNotice({
+      orderId: result.order.id,
+      email,
+      accountCreated: result.account_created,
+      emailSent: result.account_email_sent,
+    })
     clear()
-    await navigateTo(`/orders/${response.data.id}`)
+    await navigateTo(`/orders/${result.order.id}`)
   }
   catch (error: unknown) {
+    if (apiStatus(error) === 401) {
+      await navigateTo({ path: '/signin', query: { redirect: '/checkout' } })
+      return
+    }
     errorMessage.value = apiErrorMessage(error, 'สร้างคำสั่งซื้อไม่สำเร็จ')
   }
   finally {

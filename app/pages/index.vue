@@ -58,6 +58,8 @@
       <HomeBookGrid :books="books" :pending="booksPending" :failed="booksFailed" :total="bookTotal" />
     </section>
 
+    <HomeReviewSlider id="reviews" :reviews="reviews" :pending="reviewsPending" />
+
     <section id="articles" v-if="articlesPending || articles.length || articlesFailed"
       class="mx-auto max-w-6xl px-4 pb-12 md:px-6">
       <h2 class="text-3xl font-extrabold text-slate-900">บทความ</h2>
@@ -87,6 +89,7 @@
 
 <script setup lang="ts">
 import type { HomeBanner } from '@/components/landing/HomeBannerSlider.vue'
+import type { HomeReview } from '@/components/landing/HomeReviewSlider.vue'
 import type { CatalogItem, StoreBook } from '@/composables/useCart'
 
 interface ArticleSummary {
@@ -125,7 +128,12 @@ const { data: articleResponse, pending: articlesPending, error: articlesError } 
   fetchAll<ArticleSummary>('/articles'),
 )
 
+const { data: reviewResponse, pending: reviewsPending } = useLazyAsyncData('home-reviews', () =>
+  api<{ data: HomeReview[] }>('/reviews'),
+)
+
 const banners = computed(() => bannerResponse.value?.data ?? [])
+const reviews = computed(() => reviewResponse.value?.data ?? [])
 const books = computed(() => bookResponse.value?.data ?? [])
 const catalog = computed(() => catalogResponse.value?.data ?? [])
 const exams = computed(() => examResponse.value?.data ?? [])

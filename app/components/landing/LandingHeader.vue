@@ -4,7 +4,7 @@
       <div class="flex h-16 items-center gap-2 md:gap-3">
         <HeaderLogo image-class="h-9 w-auto sm:h-11" />
 
-        <nav class="ms-1 hidden items-center gap-1 font-google-sans lg:flex">
+        <nav class="ms-1 hidden items-center gap-1 font-google-sans xl:flex">
           <NuxtLink
             v-for="item in links"
             :key="item.to"
@@ -20,9 +20,9 @@
         </nav>
 
         <div class="ms-auto flex shrink-0 items-center gap-1 sm:gap-2">
-          <NuxtLink to="/cart" class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:px-3">
+          <NuxtLink to="/cart" class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:px-3" aria-label="ตะกร้า">
             <LearnIcon name="cart" class="h-4 w-4" />
-            ตะกร้า
+            <span class="hidden sm:inline">ตะกร้า</span>
             <span v-if="count" class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1 text-xs text-white">{{ count }}</span>
           </NuxtLink>
           <template v-if="loggedIn">
@@ -56,7 +56,9 @@
                     </span>
                     <span class="min-w-0 flex-1">
                       <span class="block truncate">{{ item.name }}</span>
-                      <span class="block text-xs font-medium text-slate-400">{{ item.kindLabel }}</span>
+                      <span class="block text-xs font-medium text-slate-400">
+                        {{ item.kindLabel }}{{ item.expires_at ? ` · ถึง ${formatThaiDate(item.expires_at)}` : '' }}
+                      </span>
                     </span>
                   </button>
                 </div>
@@ -73,13 +75,14 @@
                 :class="accountOpen || isActive('/profile') ? 'bg-blue-50 text-violet-700' : 'text-slate-600 hover:bg-slate-50'"
                 :aria-expanded="accountOpen"
                 aria-haspopup="menu"
+                aria-label="โปรไฟล์"
                 @click="accountOpen = !accountOpen; if (accountOpen) classroomOpen = false"
               >
                 <span class="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full bg-violet-100 text-violet-600">
                   <img v-if="user?.avatar_url" :src="user.avatar_url" alt="" class="h-full w-full object-cover">
                   <LearnIcon v-else name="profile" class="h-4 w-4" />
                 </span>
-                โปรไฟล์
+                <span class="hidden sm:inline">โปรไฟล์</span>
                 <svg viewBox="0 0 20 20" class="h-4 w-4 transition" :class="accountOpen ? 'rotate-180' : ''" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
                   <path d="m5 8 5 5 5-5" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
@@ -110,7 +113,7 @@
         </div>
       </div>
 
-      <nav class="flex gap-2 overflow-x-auto pb-3 font-google-sans [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden">
+      <nav class="flex gap-2 overflow-x-auto pb-3 font-google-sans [scrollbar-width:none] xl:hidden [&::-webkit-scrollbar]:hidden">
         <NuxtLink
           v-for="item in links"
           :key="item.to"

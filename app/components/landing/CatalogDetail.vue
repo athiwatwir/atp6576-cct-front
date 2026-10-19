@@ -17,7 +17,9 @@
         <div v-if="item.is_featured || item.is_trial_available || item.purchased" class="mt-3 flex flex-wrap gap-2">
           <span v-if="item.is_featured" class="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">แนะนำ</span>
           <span v-if="item.is_trial_available" class="rounded-full bg-sky-100 px-3 py-1 text-xs font-bold text-sky-700">ทดลองเรียนได้</span>
-          <span v-if="item.purchased" class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">มีสิทธิ์แล้ว</span>
+          <span v-if="item.purchased" class="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
+            {{ item.access_expires_at ? `มีสิทธิ์ถึง ${formatThaiDate(item.access_expires_at)}` : 'มีสิทธิ์แบบไม่จำกัดเวลา' }}
+          </span>
         </div>
         <ul class="mt-4 space-y-1 text-sm text-slate-500">
           <li v-if="item.chapter_count">{{ item.chapter_count }} บท</li>
@@ -25,20 +27,54 @@
           <li v-if="item.duration_minutes">เวลาทำ {{ item.duration_minutes }} นาที</li>
           <li v-if="item.question_count">{{ item.question_count }} ข้อ</li>
         </ul>
-        <div class="mt-4">
-          <p v-if="item.sale_price && item.sale_price < item.price" class="text-sm text-slate-400 line-through">ราคาเต็ม {{ formatBaht(item.price) }}</p>
-          <p v-if="item.sale_price && item.sale_price < item.price" class="text-sm text-slate-500">ราคาขาย {{ formatBaht(item.sale_price) }}</p>
-          <p class="text-2xl font-extrabold text-blue-700">{{ formatBaht(item.effective_price) }}</p>
-        </div>
-        <button
-          v-if="!item.purchased"
-          type="button"
-          class="mt-5 inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600"
-          @click="addCatalog(item)"
+        <NuxtLink
+          v-if="item.purchased && item.item_type !== 'exam'"
+          :to="item.item_type === 'curriculum' ? `/learn/curriculums/${item.slug}` : `/learn/${item.slug}`"
+          class="mt-5 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700"
         >
-          <LearnIcon name="cart" class="h-4 w-4" />
-          {{ inCart ? 'อยู่ในตะกร้า' : 'ใส่ตะกร้า' }}
-        </button>
+          <LearnIcon name="classroom" class="h-4 w-4" />
+          เข้าเรียน
+        </NuxtLink>
+        <template v-if="sellable">
+          <fieldset v-if="plans.length > 1" id="plans" class="mt-5 scroll-mt-32">
+            <legend class="text-sm font-bold text-slate-700">{{ item.purchased ? 'เลือกแพ็กเกจต่ออายุ' : 'เลือกแพ็กเกจ' }}</legend>
+            <div class="mt-2 grid gap-2">
+              <label
+                v-for="plan in plans"
+                :key="plan.id"
+                class="flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition"
+                :class="plan.id === chosenPlanId ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200 bg-white hover:border-blue-200'"
+              >
+                <input v-model="chosenPlanId" type="radio" :value="plan.id" name="price-plan" class="h-4 w-4 accent-blue-600">
+                <span class="min-w-0 flex-1">
+                  <span class="block font-bold text-slate-800">{{ plan.name }}</span>
+                  <span class="block text-xs text-slate-500">{{ planDurationLabel(plan) }}</span>
+                </span>
+                <span class="text-end">
+                  <span v-if="plan.sale_price && plan.sale_price < plan.price" class="block text-xs text-slate-400 line-through">{{ formatBaht(plan.price) }}</span>
+                  <span class="block font-extrabold text-blue-700">{{ formatBaht(plan.effective_price) }}</span>
+                </span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="mt-4">
+            <p v-if="displayPrice.sale_price && displayPrice.sale_price < displayPrice.price" class="text-sm text-slate-400 line-through">ราคาเต็ม {{ formatBaht(displayPrice.price) }}</p>
+            <p class="text-2xl font-extrabold text-blue-700">{{ formatBaht(displayPrice.effective_price) }}</p>
+            <p v-if="chosenPlan" class="mt-1 text-sm text-slate-500">{{ chosenPlan.name }} · {{ planDurationLabel(chosenPlan) }}</p>
+            <p v-if="item.purchased && item.access_expires_at" class="mt-2 rounded-2xl bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+              ซื้อเพิ่มตอนนี้ สิทธิ์จะต่อจากวันหมดอายุเดิม ({{ formatThaiDate(item.access_expires_at) }})
+            </p>
+          </div>
+          <button
+            type="button"
+            class="mt-5 inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600"
+            @click="addCatalog(item, chosenPlanId)"
+          >
+            <LearnIcon name="cart" class="h-4 w-4" />
+            {{ cartLabel }}
+          </button>
+        </template>
       </div>
       <div v-if="item.description" class="md:col-span-2 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
         <h2 class="font-extrabold text-slate-900">รายละเอียด</h2>
@@ -228,7 +264,8 @@
 </template>
 
 <script setup lang="ts">
-import type { CatalogItem, CourseChapter, CourseVideo, VideoWatchProgress } from '@/composables/useCart'
+import { canRenew, planDurationLabel, type CatalogItem, type CourseVideo } from '@/composables/useCart'
+import { fileSizeLabel, lessonClock, watchStatusClass, watchStatusLabel } from '@/composables/useLessonPlayer'
 
 const props = defineProps<{
   item: CatalogItem | null
@@ -238,16 +275,22 @@ const props = defineProps<{
   backLabel: string
 }>()
 
-const { addCatalog, quantityOf } = useCart()
-const { api } = useApi()
-const { loggedIn } = useAuth()
-const activeVideo = ref<CourseVideo | null>(null)
-const playerEl = ref<HTMLVideoElement | null>(null)
-const resumedLabel = ref('')
-const savedProgress = reactive<Record<number, VideoWatchProgress>>({})
-const emptyProgress: VideoWatchProgress = { status: 'unwatched', position_seconds: 0, progress_percent: 0, last_watched_at: null }
-let lastSentAt = 0
-let saveChain: Promise<void> = Promise.resolve()
+const { addCatalog, quantityOf, planOf } = useCart()
+const {
+  activeVideo,
+  playerEl,
+  resumedLabel,
+  watchOf,
+  chapterStatus,
+  barPercent,
+  play,
+  resume,
+  onTimeUpdate,
+  flushProgress,
+} = useLessonPlayer(() => (props.item?.item_type === 'course' ? props.item.slug : ''))
+const statusLabel = watchStatusLabel
+const statusClass = watchStatusClass
+const clock = lessonClock
 
 const trialVideos = computed(() => (props.item?.chapters ?? []).flatMap(chapter =>
   chapter.videos.filter(video => video.is_trial && video.video_url),
@@ -262,99 +305,6 @@ const resumeTarget = computed(() => {
   return rows.sort((a, b) => (b.progress.last_watched_at ?? '').localeCompare(a.progress.last_watched_at ?? ''))[0] ?? null
 })
 
-function watchOf(video: CourseVideo): VideoWatchProgress {
-  return savedProgress[video.id] ?? video.progress ?? emptyProgress
-}
-
-function play(video: CourseVideo | undefined) {
-  if (!video?.video_url) return
-  flushProgress(false)
-  resumedLabel.value = ''
-  lastSentAt = 0
-  activeVideo.value = video
-}
-
-function resume(event: Event) {
-  const player = event.target as HTMLVideoElement
-  const video = activeVideo.value
-  if (!video) return
-  const progress = watchOf(video)
-  if (progress.status !== 'in_progress' || progress.position_seconds < 5) return
-  const max = Number.isFinite(player.duration) ? Math.max(0, player.duration - 1) : progress.position_seconds
-  player.currentTime = Math.min(progress.position_seconds, max)
-  resumedLabel.value = `เล่นต่อจาก ${clock(player.currentTime)}`
-}
-
-function onTimeUpdate(event: Event) {
-  const player = event.target as HTMLVideoElement
-  if (!player.duration) return
-  const ratio = player.currentTime / player.duration
-  const now = Date.now()
-  if (ratio >= 0.9) {
-    if (now - lastSentAt < 3000) return
-    lastSentAt = now
-    void persist(player.currentTime, player.duration, true)
-    return
-  }
-  if (now - lastSentAt < 10000) return
-  lastSentAt = now
-  void persist(player.currentTime, player.duration, false)
-}
-
-function flushProgress(completed: boolean) {
-  const player = playerEl.value
-  if (!player || !activeVideo.value?.video_url) return
-  void persist(player.currentTime, player.duration || 0, completed)
-}
-
-function persist(position: number, duration: number, completed: boolean) {
-  const video = activeVideo.value
-  const slug = props.item?.item_type === 'course' ? props.item.slug : ''
-  if (!loggedIn.value || !video || !slug) return Promise.resolve()
-  if (!completed && position < 3) return Promise.resolve()
-
-  const body = {
-    position_seconds: Math.max(0, Math.floor(position)),
-    duration_seconds: Math.max(0, Math.floor(duration)),
-    completed,
-  }
-
-  saveChain = saveChain.then(async () => {
-    try {
-      const response = await api<{ data: VideoWatchProgress }>(`/courses/${slug}/videos/${video.id}/progress`, {
-        method: 'PUT',
-        body,
-      })
-      savedProgress[video.id] = response.data
-    }
-    catch {
-      // Keep playback going when a progress save fails.
-    }
-  })
-
-  return saveChain
-}
-
-function statusLabel(status: VideoWatchProgress['status']) {
-  if (status === 'completed') return 'ผ่านแล้ว'
-  if (status === 'in_progress') return 'ดูแล้ว'
-  return 'ยังไม่ได้ดู'
-}
-
-function statusClass(status: VideoWatchProgress['status']) {
-  if (status === 'completed') return 'bg-emerald-100 text-emerald-700'
-  if (status === 'in_progress') return 'bg-sky-100 text-sky-700'
-  return 'bg-slate-200 text-slate-500'
-}
-
-function chapterStatus(chapter: CourseChapter): VideoWatchProgress['status'] {
-  if (!chapter.videos.length) return 'unwatched'
-  const statuses = chapter.videos.map(video => watchOf(video).status)
-  if (statuses.every(status => status === 'completed')) return 'completed'
-  if (statuses.every(status => status === 'unwatched')) return 'unwatched'
-  return 'in_progress'
-}
-
 function playLabel(video: CourseVideo) {
   const status = watchOf(video).status
   if (status === 'completed') return 'ดูอีกครั้ง'
@@ -362,38 +312,7 @@ function playLabel(video: CourseVideo) {
   return video.is_trial ? 'ดูคลิปทดลอง' : 'ดูวิดีโอ'
 }
 
-function barPercent(video: CourseVideo) {
-  const progress = watchOf(video)
-  if (progress.status === 'completed') return 100
-  return Math.min(100, Math.max(0, progress.progress_percent))
-}
-
-function clock(seconds: number) {
-  const total = Math.max(0, Math.floor(seconds))
-  const minutes = Math.floor(total / 60)
-  const remain = total % 60
-  if (minutes === 0) return `${remain} วินาที`
-  if (remain === 0) return `${minutes} นาที`
-  return `${minutes} นาที ${remain} วินาที`
-}
-
-onUnmounted(() => {
-  flushProgress(false)
-})
-
-function fileSizeLabel(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`
-  return `${(bytes / 1024 / 1024).toFixed(1)} MB`
-}
-
-function durationLabel(seconds: number) {
-  const minutes = Math.floor(seconds / 60)
-  const remain = seconds % 60
-  if (minutes === 0) return `${remain} วินาที`
-  if (remain === 0) return `${minutes} นาที`
-  return `${minutes} นาที ${remain} วินาที`
-}
+const durationLabel = lessonClock
 
 watch(trialVideos, (videos) => {
   if (window.location.hash === '#trial' && videos[0]) play(videos[0])
@@ -404,6 +323,28 @@ const inCart = computed(() => {
   if (!item) return 0
   return quantityOf(item.item_type, item.id)
 })
+
+const plans = computed(() => props.item?.price_plans ?? [])
+const chosenPlanId = ref<number | null>(null)
+const chosenPlan = computed(() => plans.value.find(plan => plan.id === chosenPlanId.value) ?? null)
+const displayPrice = computed(() => chosenPlan.value ?? props.item ?? { price: 0, sale_price: null, effective_price: 0 })
+const sellable = computed(() => Boolean(props.item && (!props.item.purchased || canRenew(props.item))))
+
+const cartLabel = computed(() => {
+  const item = props.item
+  if (!item) return ''
+  const cartPlanId = planOf(item.item_type, item.id)
+  if (inCart.value) return cartPlanId === chosenPlanId.value ? 'อยู่ในตะกร้า' : 'เปลี่ยนเป็นแพ็กเกจนี้'
+  return item.purchased ? 'ต่ออายุ ใส่ตะกร้า' : 'ใส่ตะกร้า'
+})
+
+watch(() => props.item, (item) => {
+  if (!item) return
+  const list = item.price_plans ?? []
+  const cartPlanId = planOf(item.item_type, item.id)
+  chosenPlanId.value = list.find(plan => plan.id === cartPlanId)?.id ?? list[0]?.id ?? null
+  if (window.location.hash === '#plans') nextTick(() => document.getElementById('plans')?.scrollIntoView({ block: 'center' }))
+}, { immediate: true })
 
 const metaLine = computed(() => {
   const item = props.item

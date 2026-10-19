@@ -38,7 +38,9 @@
           <div v-if="item.is_featured || item.is_trial_available || item.purchased" class="mt-2 flex flex-wrap gap-1">
             <span v-if="item.is_featured" class="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">แนะนำ</span>
             <span v-if="item.is_trial_available" class="rounded-full bg-sky-100 px-2 py-0.5 text-xs font-bold text-sky-700">ทดลองเรียนได้</span>
-            <span v-if="item.purchased" class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">มีสิทธิ์แล้ว</span>
+            <span v-if="item.purchased" class="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+              {{ item.access_expires_at ? `มีสิทธิ์ถึง ${formatThaiDate(item.access_expires_at)}` : 'มีสิทธิ์แล้ว' }}
+            </span>
           </div>
           <ul class="mt-2 space-y-0.5 text-xs text-slate-400">
             <li v-if="item.chapter_count">{{ item.chapter_count }} บท</li>
@@ -48,7 +50,10 @@
           </ul>
           <div class="mt-3">
             <p v-if="item.sale_price && item.sale_price < item.price" class="text-xs text-slate-400 line-through">ราคาเต็ม {{ formatBaht(item.price) }}</p>
-            <p class="text-sm font-bold text-blue-700">{{ formatBaht(item.effective_price) }}</p>
+            <p class="text-sm font-bold text-blue-700">
+              {{ hasPlanChoice(item) ? `เริ่มต้น ${formatBaht(item.effective_price)}` : formatBaht(item.effective_price) }}
+            </p>
+            <p class="text-xs text-slate-400">{{ planSummary(item) }}</p>
           </div>
           <span class="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700">
             ดูรายละเอียดทั้งหมด
@@ -65,15 +70,25 @@
             <LearnIcon name="play" class="h-4 w-4" />
             ดูวิดีโอทดลองเรียน
           </NuxtLink>
-          <button
-            v-if="purchasable && !item.purchased"
-            type="button"
-            class="inline-flex items-center justify-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600"
-            @click="addCatalog(item)"
-          >
-            <LearnIcon name="cart" class="h-4 w-4" />
-            {{ inCart(item) ? 'อยู่ในตะกร้า' : 'ใส่ตะกร้า' }}
-          </button>
+          <template v-if="purchasable && (!item.purchased || canRenew(item))">
+            <NuxtLink
+              v-if="hasPlanChoice(item) && !inCart(item)"
+              :to="`${detailPath(item)}#plans`"
+              class="inline-flex items-center justify-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600"
+            >
+              <LearnIcon name="cart" class="h-4 w-4" />
+              {{ item.purchased ? 'เลือกแพ็กเกจต่ออายุ' : 'เลือกแพ็กเกจ' }}
+            </NuxtLink>
+            <button
+              v-else
+              type="button"
+              class="inline-flex items-center justify-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600"
+              @click="addCatalog(item, planOf(item.item_type, item.id))"
+            >
+              <LearnIcon name="cart" class="h-4 w-4" />
+              {{ inCart(item) ? 'อยู่ในตะกร้า' : item.purchased ? 'ต่ออายุ' : 'ใส่ตะกร้า' }}
+            </button>
+          </template>
         </div>
       </article>
     </div>
@@ -81,7 +96,7 @@
 </template>
 
 <script setup lang="ts">
-import type { CatalogItem } from '@/composables/useCart'
+import { canRenew, hasPlanChoice, type CatalogItem } from '@/composables/useCart'
 
 withDefaults(defineProps<{
   title: string
@@ -98,10 +113,17 @@ withDefaults(defineProps<{
   chip: 'bg-blue-100 text-blue-600',
 })
 
-const { count, addCatalog, quantityOf } = useCart()
+const { count, addCatalog, quantityOf, planOf } = useCart()
 
 function inCart(item: CatalogItem) {
   return quantityOf(item.item_type, item.id)
+}
+
+function planSummary(item: CatalogItem) {
+  const plans = item.price_plans ?? []
+  if (plans.length > 1) return `${plans.length} แพ็กเกจ · ${plans.map(plan => plan.name).join(' / ')}`
+  const plan = plans[0]
+  return plan ? plan.name : ''
 }
 
 function detailPath(item: CatalogItem) {
