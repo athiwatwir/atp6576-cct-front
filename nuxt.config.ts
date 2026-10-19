@@ -29,11 +29,11 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: 'http://127.0.0.1:8000/api/v1',
-      apiKey: '1304ebc02370f094348c732aef05321bc520ee2d966a697215067a6c29493513',
-      bankName: '',
-      bankAccountName: '',
-      bankAccountNumber: '',
+      apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://127.0.0.1:8000/api/v1',
+      apiKey: process.env.NUXT_PUBLIC_API_KEY || '',
+      bankName: process.env.NUXT_PUBLIC_BANK_NAME || '',
+      bankAccountName: process.env.NUXT_PUBLIC_BANK_ACCOUNT_NAME || '',
+      bankAccountNumber: process.env.NUXT_PUBLIC_BANK_ACCOUNT_NUMBER || '',
     },
   },
 })

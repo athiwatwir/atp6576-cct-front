@@ -8,6 +8,7 @@ Public pages use `app/layouts/landing.vue`. Signed-in pages such as the classroo
 
 ```bash
 npm install
+cp .env.example .env   # then fill in NUXT_PUBLIC_API_KEY (same value as STOREFRONT_API_KEY in the backend)
 npm run dev
 ```
 
