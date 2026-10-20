@@ -27,7 +27,7 @@
       </div>
       <div class="rounded-[2rem] bg-gradient-to-br from-sky-100 via-white to-blue-100 p-8 text-center shadow-sm">
         <p class="text-6xl" aria-hidden="true">📚</p>
-        <p class="mt-3 text-lg font-bold text-blue-800">ห้องเรียนที่เข้าได้หลังสมัครสมาชิก</p>
+        <p class="mt-3 text-lg font-bold text-blue-800">เข้าห้องเรียน</p>
         <p class="mt-1 text-sm text-slate-500">เข้าห้องเรียนได้หลังเข้าสู่ระบบ</p>
       </div>
     </section>

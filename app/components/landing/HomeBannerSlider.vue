@@ -8,9 +8,10 @@
       @pointerup="onPointerUp" @pointercancel="startX = null">
       <div class="flex transition-transform duration-500 ease-out motion-reduce:transition-none"
         :style="{ transform: `translateX(-${current * 100}%)` }">
-        <article v-for="banner in banners" :key="banner.id" class="relative min-w-full">
+        <article v-for="(banner, index) in banners" :key="banner.id" class="relative min-w-full">
           <component :is="linkComponent(banner)" v-bind="linkBindings(banner)" class="relative block">
             <img v-if="banner.image_url" :src="banner.image_url" :alt="banner.title"
+              :fetchpriority="index === 0 ? 'high' : 'low'" decoding="async"
               class="aspect-[16/9] w-full object-cover md:aspect-[21/8]">
             <div v-else class="aspect-[16/9] w-full bg-gradient-to-br from-sky-200 to-blue-100 md:aspect-[21/8]" />
             <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-900/80 to-transparent px-5 pt-10 text-white" :class="banners.length > 1 ? 'pb-10' : 'pb-5'">
