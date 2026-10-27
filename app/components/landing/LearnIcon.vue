@@ -48,11 +48,18 @@
     <template v-else-if="name === 'arrow'">
       <path d="M5 12h14M13 6l6 6-6 6" />
     </template>
+    <template v-else-if="name === 'clock'">
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </template>
+    <template v-else-if="name === 'infinity'">
+      <path d="M7.5 9c-1.9 0-3.5 1.3-3.5 3s1.6 3 3.5 3c3.5 0 5.5-6 9-6 1.9 0 3.5 1.3 3.5 3s-1.6 3-3.5 3c-3.5 0-5.5-6-9-6Z" />
+    </template>
   </svg>
 </template>
 
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'course' | 'exam' | 'book' | 'contact' | 'cart' | 'classroom' | 'login' | 'profile' | 'logout' | 'signup' | 'play' | 'arrow'
+  name: 'home' | 'course' | 'exam' | 'book' | 'contact' | 'cart' | 'classroom' | 'login' | 'profile' | 'logout' | 'signup' | 'play' | 'arrow' | 'clock' | 'infinity'
 }>()
 </script>

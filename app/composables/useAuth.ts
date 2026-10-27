@@ -59,6 +59,8 @@ interface AuthResponse {
 
 let profileRequest: Promise<void> | null = null
 
+export const PROFILE_REMINDER_KEY = 'cct-profile-reminder-dismissed'
+
 export function useAuth() {
   const token = useCookie<string | null>('student_token', {
     sameSite: 'lax',
@@ -125,6 +127,7 @@ export function useAuth() {
       method: 'POST',
       body: { email, password },
     })
+    if (import.meta.client) sessionStorage.removeItem(PROFILE_REMINDER_KEY)
     token.value = response.token
     user.value = response.user
   }
@@ -147,6 +150,7 @@ export function useAuth() {
     const message = response.message || 'สมัครสมาชิกแล้ว กรุณายืนยันอีเมลจากลิงก์ที่เราส่งให้'
 
     if (response.token) {
+      if (import.meta.client) sessionStorage.removeItem(PROFILE_REMINDER_KEY)
       token.value = response.token
       user.value = response.user ?? null
     }

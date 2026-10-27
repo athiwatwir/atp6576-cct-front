@@ -36,9 +36,16 @@
             เบอร์โทร
             <input v-model="form.phone" type="tel" maxlength="30" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
-          <label class="block text-sm font-semibold text-slate-700">
+          <label class="block scroll-mt-32 text-sm font-semibold text-slate-700" :class="highlightSchool ? 'rounded-2xl bg-amber-50 p-3 ring-2 ring-amber-300' : ''">
             โรงเรียน
-            <input v-model="form.school_name" maxlength="255" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input
+              ref="schoolEl"
+              v-model="form.school_name"
+              maxlength="255"
+              placeholder="เช่น โรงเรียนอนุบาลเชียงใหม่"
+              class="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+            >
+            <span v-if="highlightSchool" class="mt-1 block text-xs font-normal text-amber-700">กรอกชื่อโรงเรียน แล้วกด "บันทึกโปรไฟล์" ด้านล่าง</span>
           </label>
           <label class="block text-sm font-semibold text-slate-700 sm:col-span-2">
             ที่อยู่
@@ -163,6 +170,16 @@ const passwordSuccess = ref('')
 const passwordForm = reactive({ current: '', next: '', confirm: '' })
 
 const initial = computed(() => (user.value?.name || 'น').trim().charAt(0))
+
+const route = useRoute()
+const schoolEl = ref<HTMLInputElement | null>(null)
+const highlightSchool = computed(() => route.query.complete === 'school' && !user.value?.school_name?.trim())
+
+watch(schoolEl, (element) => {
+  if (!element || route.query.complete !== 'school') return
+  element.scrollIntoView({ block: 'center', behavior: 'smooth' })
+  element.focus({ preventScroll: true })
+})
 
 watch(user, (value) => {
   if (!value || filled.value) return

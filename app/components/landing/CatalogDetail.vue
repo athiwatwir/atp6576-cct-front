@@ -104,12 +104,17 @@
             เล่นต่อ
           </button>
         </div>
-        <div v-if="activeVideo?.video_url" class="overflow-hidden rounded-3xl bg-slate-900">
+        <div v-if="activeVideo?.video_url" class="select-none overflow-hidden rounded-3xl bg-slate-900" @contextmenu.prevent>
           <video
             :key="activeVideo.id"
             ref="playerEl"
             :src="activeVideo.video_url"
             controls
+            controlslist="nodownload noremoteplayback"
+            disablepictureinpicture
+            disableremoteplayback
+            playsinline
+            draggable="false"
             autoplay
             class="aspect-video w-full"
             @loadedmetadata="resume"

@@ -22,21 +22,32 @@
       <section v-for="group in groups" :key="group.kind" class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
         <h2 class="font-extrabold text-slate-900">{{ group.title }}</h2>
         <p v-if="!group.items.length" class="mt-3 text-sm text-slate-400">{{ group.empty }}</p>
-        <ul v-else class="mt-4 grid gap-3 sm:grid-cols-2">
+        <ul v-else class="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <li v-for="item in group.items" :key="`${item.kind}-${item.id}`">
-            <NuxtLink :to="item.to" class="flex items-center gap-3 rounded-2xl bg-slate-50 p-3 transition hover:bg-blue-50">
-              <span class="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl" :class="coverClass(item.kind)">
-                <img v-if="item.thumbnail_url" :src="item.thumbnail_url" :alt="item.name" class="h-full w-full object-cover">
-                <LearnIcon v-else :name="item.kind === 'exam' ? 'exam' : 'course'" class="absolute inset-0 m-auto h-6 w-6" />
+            <NuxtLink :to="item.to" class="group flex h-full flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md hover:ring-blue-200">
+              <span class="relative block aspect-video w-full overflow-hidden" :class="coverClass(item.kind)">
+                <img v-if="item.thumbnail_url" :src="item.thumbnail_url" :alt="item.name" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                <LearnIcon v-else :name="item.kind === 'exam' ? 'exam' : 'course'" class="absolute inset-0 m-auto h-12 w-12" />
+                <span class="absolute start-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm">{{ item.kindLabel }}</span>
               </span>
-              <span class="min-w-0 flex-1">
-                <span class="block truncate text-sm font-bold text-slate-900">{{ item.name }}</span>
-                <span class="block text-xs font-semibold text-slate-500">{{ item.kindLabel }}</span>
-                <span class="block text-xs" :class="expiringSoon(item.expires_at) ? 'font-bold text-amber-600' : 'text-slate-400'">
-                  {{ item.expires_at ? `ใช้ได้ถึง ${formatThaiDate(item.expires_at)}` : 'ไม่จำกัดเวลา' }}
+
+              <span class="flex flex-1 flex-col gap-3 p-4">
+                <span class="block font-bold leading-snug text-slate-900">{{ item.name }}</span>
+
+                <span class="mt-auto flex flex-wrap items-center justify-between gap-2">
+                  <span class="inline-flex items-center gap-2 rounded-xl px-3 py-1.5" :class="expiry(item.expires_at).tone">
+                    <LearnIcon :name="item.expires_at ? 'clock' : 'infinity'" class="h-5 w-5 shrink-0" />
+                    <span class="leading-tight">
+                      <span class="block text-sm font-extrabold">{{ expiry(item.expires_at).headline }}</span>
+                      <span v-if="item.expires_at" class="block text-[11px] font-semibold opacity-80">ใช้ได้ถึง {{ formatThaiDate(item.expires_at) }}</span>
+                    </span>
+                  </span>
+                  <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-blue-200 transition group-hover:bg-blue-700">
+                    <LearnIcon :name="item.kind === 'exam' ? 'exam' : 'play'" class="h-4 w-4" />
+                    {{ item.kind === 'exam' ? 'เข้าสอบ' : 'เข้าเรียน' }}
+                  </span>
                 </span>
               </span>
-              <span class="shrink-0 text-xs font-bold text-blue-700">เข้าเรียน</span>
             </NuxtLink>
           </li>
         </ul>
@@ -69,12 +80,34 @@ const groups = computed(() => [
   },
 ])
 
-const soonMs = 7 * 24 * 60 * 60 * 1000
+const hourMs = 60 * 60 * 1000
+const dayMs = 24 * hourMs
+const now = ref(Date.now())
+let clockTimer: ReturnType<typeof setInterval> | undefined
 
-function expiringSoon(value: string | null | undefined) {
-  if (!value) return false
-  const time = new Date(value).getTime()
-  return Number.isFinite(time) && time - Date.now() < soonMs
+onMounted(() => {
+  clockTimer = setInterval(() => {
+    now.value = Date.now()
+  }, 60 * 1000)
+})
+
+onUnmounted(() => {
+  if (clockTimer) clearInterval(clockTimer)
+})
+
+function expiry(value: string | null | undefined) {
+  if (!value) return { headline: 'เรียนได้ไม่จำกัดเวลา', tone: 'bg-sky-100 text-sky-700' }
+  const left = new Date(value).getTime() - now.value
+  if (!Number.isFinite(left)) return { headline: 'ไม่ทราบวันหมดอายุ', tone: 'bg-slate-100 text-slate-600' }
+  if (left <= 0) return { headline: 'หมดอายุแล้ว', tone: 'bg-rose-100 text-rose-700' }
+  if (left < dayMs) {
+    const hours = Math.max(1, Math.ceil(left / hourMs))
+    return { headline: `เหลือ ${hours} ชั่วโมง`, tone: 'bg-rose-100 text-rose-700' }
+  }
+  const days = Math.ceil(left / dayMs)
+  if (days <= 3) return { headline: `เหลือ ${days} วัน`, tone: 'bg-rose-100 text-rose-700' }
+  if (days <= 7) return { headline: `เหลือ ${days} วัน`, tone: 'bg-amber-100 text-amber-700' }
+  return { headline: `เหลือ ${days} วัน`, tone: 'bg-emerald-100 text-emerald-700' }
 }
 
 function coverClass(kind: string) {
