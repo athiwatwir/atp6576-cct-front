@@ -99,21 +99,14 @@
             </label>
           </div>
 
-          <div v-if="selectedOption && selectedOption.method !== 'bank_transfer'" class="mt-4">
-            <p class="text-sm text-slate-500">
-              {{ selectedOption.method === 'thai_qr' ? 'ระบบจะพาไปหน้าชำระเงินเพื่อสแกน QR พร้อมเพย์' : 'ระบบจะพาไปหน้าชำระเงินเพื่อกรอกบัตรอย่างปลอดภัย' }}
-              ยอดชำระ {{ formatBaht(selectedOption.total) }}
-            </p>
-            <p v-if="linkError" class="mt-2 text-sm text-rose-600">{{ linkError }}</p>
-            <button
-              type="button"
-              class="mt-3 w-full rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600 disabled:bg-slate-300"
-              :disabled="opening"
-              @click="openPaymentPage"
-            >
-              {{ opening ? 'กำลังเปิดหน้าชำระเงิน...' : `ชำระด้วย ${selectedOption.label}` }}
-            </button>
-          </div>
+          <OnlinePaymentPanel
+            v-if="selectedOption && (selectedOption.method === 'thai_qr' || selectedOption.method === 'credit_card')"
+            :key="selectedOption.method"
+            :method="selectedOption.method"
+            :base-path="paymentBasePath"
+            :total="selectedOption.total"
+            @paid="onPaid"
+          />
         </div>
 
         <div v-if="selectedOption?.method === 'bank_transfer'" class="mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
@@ -211,7 +204,6 @@ interface PaymentOption {
 interface GuestOrderView {
   order: StoreOrder
   payment_options: PaymentOption[]
-  payment_url: string | null
 }
 
 const route = useRoute()
@@ -227,13 +219,11 @@ const orderId = computed(() => {
 })
 
 const queryToken = typeof route.query.guest_token === 'string' ? route.query.guest_token : ''
-if (queryToken) {
-  remember(orderId.value!, queryToken)
-  await router.replace({ query: {} })
-}
+const returnedFromCard = route.query.payment_return === 'card'
+if (queryToken) remember(orderId.value!, queryToken)
+if (queryToken || returnedFromCard) await router.replace({ query: {} })
 const guestToken = queryToken || tokenFor(orderId.value!)
 const guestMode = ref(false)
-const guestPaymentUrl = ref<string | null>(null)
 const notice = ref(takeNotice(orderId.value!))
 
 const bankName = config.public.bankName
@@ -247,8 +237,6 @@ const options = ref<PaymentOption[]>([])
 const optionsPending = ref(false)
 const optionsError = ref('')
 const method = ref<PaymentMethod | null>(null)
-const opening = ref(false)
-const linkError = ref('')
 const slipError = ref('')
 const slipSuccess = ref('')
 const uploading = ref(false)
@@ -262,6 +250,10 @@ const payable = computed(() => {
 })
 
 const selectedOption = computed(() => options.value.find(option => option.method === method.value) ?? null)
+
+const paymentBasePath = computed(() => (guestMode.value
+  ? `/guest/orders/${guestToken}/payment`
+  : `/orders/${orderId.value}/payment`))
 
 const statusClass = computed(() => {
   const status = order.value?.payment_status
@@ -294,7 +286,6 @@ async function loadGuestOrder() {
   guestMode.value = true
   setOrder(response.data.order)
   options.value = response.data.payment_options ?? []
-  guestPaymentUrl.value = response.data.payment_url
   pickMethod()
 }
 
@@ -358,27 +349,14 @@ else {
   }
 }
 
-async function openPaymentPage() {
-  if (!order.value || opening.value) return
-  opening.value = true
-  linkError.value = ''
+async function onPaid() {
   try {
-    if (guestMode.value) {
-      if (!guestPaymentUrl.value) await loadGuestOrder()
-      if (!guestPaymentUrl.value) {
-        linkError.value = 'ยังเปิดหน้าชำระเงินไม่ได้ ลองรีเฟรชหน้านี้อีกครั้ง'
-        opening.value = false
-        return
-      }
-      window.location.href = guestPaymentUrl.value
-      return
-    }
-    const response = await api<{ data: { url: string } }>(`/orders/${order.value.id}/payment-link`, { method: 'POST' })
-    window.location.href = response.data.url
+    if (guestMode.value) await loadGuestOrder()
+    else await loadMemberOrder()
+    if (loggedIn.value) fetchUser()
   }
-  catch (error: unknown) {
-    linkError.value = apiErrorMessage(error, 'เปิดหน้าชำระเงินไม่สำเร็จ')
-    opening.value = false
+  catch {
+    // The panel already shows the payment as successful.
   }
 }
 
