@@ -52,6 +52,13 @@
       <circle cx="12" cy="12" r="8.5" />
       <path d="M12 7.5V12l3 2" />
     </template>
+    <template v-else-if="name === 'phone'">
+      <path d="M6.6 4h2.6l1.3 3.4-1.7 1.1a10.5 10.5 0 0 0 4.7 4.7l1.1-1.7 3.4 1.3v2.6a1.6 1.6 0 0 1-1.7 1.6A13.3 13.3 0 0 1 5 6.6 1.6 1.6 0 0 1 6.6 4Z" />
+    </template>
+    <template v-else-if="name === 'location'">
+      <path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z" />
+      <circle cx="12" cy="10" r="2.4" />
+    </template>
     <template v-else-if="name === 'infinity'">
       <path d="M7.5 9c-1.9 0-3.5 1.3-3.5 3s1.6 3 3.5 3c3.5 0 5.5-6 9-6 1.9 0 3.5 1.3 3.5 3s-1.6 3-3.5 3c-3.5 0-5.5-6-9-6Z" />
     </template>
@@ -60,6 +67,6 @@
 
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'course' | 'exam' | 'book' | 'contact' | 'cart' | 'classroom' | 'login' | 'profile' | 'logout' | 'signup' | 'play' | 'arrow' | 'clock' | 'infinity'
+  name: 'home' | 'course' | 'exam' | 'book' | 'contact' | 'cart' | 'classroom' | 'login' | 'profile' | 'logout' | 'signup' | 'play' | 'arrow' | 'clock' | 'infinity' | 'phone' | 'location'
 }>()
 </script>
