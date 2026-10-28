@@ -155,9 +155,10 @@ const qr = computed(() => {
 })
 const qrExpired = computed(() => qr.value !== null && remaining.value <= 0)
 const countdown = computed(() => {
-  const minutes = Math.floor(remaining.value / 60)
+  const hours = Math.floor(remaining.value / 3600)
+  const minutes = Math.floor((remaining.value % 3600) / 60)
   const seconds = remaining.value % 60
-  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+  return [hours, minutes, seconds].map(part => String(part).padStart(2, '0')).join(':')
 })
 const expiresAtText = computed(() => (qr.value?.expires_at
   ? new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(qr.value.expires_at))
