@@ -28,12 +28,12 @@
           <li v-if="item.question_count">{{ item.question_count }} ข้อ</li>
         </ul>
         <NuxtLink
-          v-if="item.purchased && item.item_type !== 'exam'"
-          :to="item.item_type === 'curriculum' ? `/learn/curriculums/${item.slug}` : `/learn/${item.slug}`"
+          v-if="item.purchased"
+          :to="item.item_type === 'curriculum' ? `/learn/curriculums/${item.slug}` : item.item_type === 'exam' ? `/learn/exams/${item.slug}` : `/learn/${item.slug}`"
           class="mt-5 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white shadow-md shadow-blue-200 transition hover:-translate-y-0.5 hover:bg-blue-700"
         >
-          <LearnIcon name="classroom" class="h-4 w-4" />
-          เข้าเรียน
+          <LearnIcon :name="item.item_type === 'exam' ? 'exam' : 'classroom'" class="h-4 w-4" />
+          {{ item.item_type === 'exam' ? 'เข้าสอบ' : 'เข้าเรียน' }}
         </NuxtLink>
         <template v-if="sellable">
           <fieldset v-if="plans.length > 1" id="plans" class="mt-5 scroll-mt-32">
@@ -194,7 +194,7 @@
               <h4 class="text-sm font-bold text-slate-500">ข้อสอบ</h4>
               <ul class="mt-2 space-y-2">
                 <li v-for="exam in chapter.exams" :key="exam.id">
-                  <NuxtLink v-if="item.purchased" :to="`/exams/${exam.slug}`" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
+                  <NuxtLink v-if="item.purchased" :to="`/learn/exams/${exam.slug}?course=${item.slug}`" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
                     <span>
                       <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
                       <span v-if="exam.description" class="block text-xs text-slate-500">{{ exam.description }}</span>
@@ -226,7 +226,7 @@
           <h3 class="font-bold text-slate-800">ข้อสอบของคอร์ส</h3>
           <ul class="mt-3 space-y-2">
             <li v-for="exam in item.exams" :key="exam.id">
-              <NuxtLink v-if="item.purchased" :to="`/exams/${exam.slug}`" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
+              <NuxtLink v-if="item.purchased" :to="`/learn/exams/${exam.slug}?course=${item.slug}`" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
                 <span>
                   <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
                   <span v-if="exam.description" class="block text-xs text-slate-500">{{ exam.description }}</span>

@@ -7,6 +7,7 @@
     </div>
     <LandingFooter v-if="showChrome" />
     <CartNotice />
+    <SupportChatButton v-if="showChrome" />
   </div>
 </template>
 

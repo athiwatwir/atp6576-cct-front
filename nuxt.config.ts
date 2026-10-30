@@ -29,7 +29,7 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBase: 'https://office.clickclasstutor.com/api/v1',
+      apiBase: 'http://127.0.0.1:8000/api/v1',
       apiKey: '1304ebc02370f094348c732aef05321bc520ee2d966a697215067a6c29493513',
       bankName: '',
       bankAccountName: '',

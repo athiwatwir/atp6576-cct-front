@@ -7,5 +7,6 @@
     </main>
     <LandingFooter />
     <CartNotice />
+    <SupportChatButton />
   </div>
 </template>

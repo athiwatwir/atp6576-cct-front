@@ -62,7 +62,7 @@
             <p class="text-xs font-bold text-slate-400">ข้อสอบของคอร์ส</p>
             <ul class="mt-1 space-y-0.5">
               <li v-for="exam in course.exams" :key="exam.id">
-                <NuxtLink :to="`/exams/${exam.slug}`"
+                <NuxtLink :to="`/learn/exams/${exam.slug}?course=${course.slug}`"
                   class="flex items-start gap-2 rounded-xl px-2 py-2 text-sm text-slate-600 hover:bg-amber-50">
                   <span class="mt-0.5 shrink-0 text-xs" aria-hidden="true">📝</span>
                   <span>{{ exam.name }}</span>
@@ -176,7 +176,7 @@
             <h3 class="font-bold text-slate-800">ข้อสอบท้ายบท</h3>
             <ul class="mt-3 space-y-2">
               <li v-for="exam in activeChapter.exams" :key="exam.id">
-                <NuxtLink :to="`/exams/${exam.slug}`"
+                <NuxtLink :to="`/learn/exams/${exam.slug}?course=${course.slug}`"
                   class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
                   <span>
                     <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
