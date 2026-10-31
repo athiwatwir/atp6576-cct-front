@@ -1,7 +1,7 @@
 <template>
-  <a :href="lineUrl" target="_blank" rel="noopener"
+  <a :href="contactInfo.lineUrl" target="_blank" rel="noopener"
     class="support-chat group fixed bottom-5 end-4 z-40 flex items-end gap-2 sm:bottom-6 sm:end-6"
-    aria-label="แชทกับทีมซัพพอร์ตทาง LINE @119nownk">
+    :aria-label="`แชทกับทีมซัพพอร์ตทาง LINE ${contactInfo.lineId}`">
     <span
       class="mb-3 hidden rounded-2xl rounded-ee-sm bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-lg ring-1 ring-slate-100 transition group-hover:-translate-y-0.5 sm:block">
       สงสัยตรงไหน แชทกับเราได้เลย
@@ -22,10 +22,6 @@
     </span>
   </a>
 </template>
-
-<script setup lang="ts">
-const lineUrl = 'https://line.me/R/ti/p/%40119nownk'
-</script>
 
 <style scoped>
 .support-chat__bubble {

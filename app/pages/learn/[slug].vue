@@ -62,11 +62,12 @@
             <p class="text-xs font-bold text-slate-400">ข้อสอบของคอร์ส</p>
             <ul class="mt-1 space-y-0.5">
               <li v-for="exam in course.exams" :key="exam.id">
-                <NuxtLink :to="`/learn/exams/${exam.slug}?course=${course.slug}`"
-                  class="flex items-start gap-2 rounded-xl px-2 py-2 text-sm text-slate-600 hover:bg-amber-50">
+                <button type="button"
+                  class="flex w-full items-start gap-2 rounded-xl px-2 py-2 text-start text-sm text-slate-600 hover:bg-amber-50"
+                  @click="openExam(exam.slug)">
                   <span class="mt-0.5 shrink-0 text-xs" aria-hidden="true">📝</span>
                   <span>{{ exam.name }}</span>
-                </NuxtLink>
+                </button>
               </li>
             </ul>
           </section>
@@ -176,8 +177,9 @@
             <h3 class="font-bold text-slate-800">ข้อสอบท้ายบท</h3>
             <ul class="mt-3 space-y-2">
               <li v-for="exam in activeChapter.exams" :key="exam.id">
-                <NuxtLink :to="`/learn/exams/${exam.slug}?course=${course.slug}`"
-                  class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
+                <button type="button"
+                  class="flex w-full flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2 text-start transition hover:bg-amber-100"
+                  @click="openExam(exam.slug)">
                   <span>
                     <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
                     <span class="block text-xs text-slate-400">
@@ -185,8 +187,8 @@
                       <template v-if="exam.duration_minutes"> · {{ exam.duration_minutes }} นาที</template>
                     </span>
                   </span>
-                  <span class="text-xs font-bold text-amber-700">เข้าสอบ</span>
-                </NuxtLink>
+                  <span class="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-bold text-white">เข้าสอบ</span>
+                </button>
               </li>
             </ul>
           </section>
@@ -217,6 +219,50 @@
         </div>
       </main>
     </div>
+
+    <Teleport to="body">
+      <div v-if="examSlug" class="fixed inset-0 z-50 flex justify-center bg-slate-900/60 sm:items-center sm:p-4"
+        @click.self="requestCloseExam">
+        <div role="dialog" aria-modal="true" aria-labelledby="exam-modal-title"
+          class="flex h-full w-full flex-col overflow-hidden bg-slate-50 shadow-2xl sm:h-[min(92vh,56rem)] sm:max-w-3xl sm:rounded-3xl">
+          <header class="flex shrink-0 items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
+            <p id="exam-modal-title" class="flex min-w-0 items-center gap-2 text-sm font-extrabold text-slate-900">
+              <LearnIcon name="exam" class="h-4 w-4 shrink-0 text-amber-500" />
+              <span class="truncate">{{ examTitle }}</span>
+            </p>
+            <button type="button"
+              class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+              aria-label="ปิดข้อสอบ" @click="requestCloseExam">
+              <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2"
+                stroke-linecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          </header>
+          <div data-exam-scroll class="min-h-0 flex-1 overflow-y-auto p-4 md:p-6">
+            <ExamRunner :slug="examSlug" embedded exit-label="กลับไปเรียนต่อ" @exit="closeExam"
+              @taking="examTaking = $event" />
+          </div>
+        </div>
+
+        <div v-if="leaveConfirm" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4"
+          @click.self="leaveConfirm = false">
+          <div role="alertdialog" aria-modal="true" aria-labelledby="exam-leave-title"
+            class="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl">
+            <h2 id="exam-leave-title" class="text-lg font-extrabold text-slate-900">ออกจากข้อสอบตอนนี้ไหม</h2>
+            <p class="mt-2 text-sm text-slate-600">คำตอบที่เลือกไว้ยังอยู่ กดเข้าสอบอีกครั้งเพื่อทำต่อได้ แต่เวลาสอบยังเดินอยู่</p>
+            <div class="mt-5 grid grid-cols-2 gap-2">
+              <button type="button"
+                class="rounded-full bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-200"
+                @click="closeExam">ออกก่อน</button>
+              <button type="button"
+                class="rounded-full bg-amber-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-600"
+                @click="leaveConfirm = false">ทำข้อสอบต่อ</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -365,8 +411,11 @@ function chapterOf(video: CourseVideo) {
 }
 
 function setQuery(video: CourseVideo | null, chapter: CourseChapter) {
-  const query = video ? { video: String(video.id) } : { chapter: String(chapter.id) }
-  if (route.query.video !== query.video || route.query.chapter !== query.chapter) router.replace({ query })
+  const query: Record<string, string> = video ? { video: String(video.id) } : { chapter: String(chapter.id) }
+  if (examSlug.value) query.exam = examSlug.value
+  if (route.query.video !== query.video || route.query.chapter !== query.chapter || route.query.exam !== query.exam) {
+    router.replace({ query })
+  }
 }
 
 function select(video: CourseVideo | null | undefined, userAction: boolean) {
@@ -427,8 +476,62 @@ function openInitial() {
   if (chapters.value[0]) selectChapter(chapters.value[0], false)
 }
 
+const examSlug = ref<string | null>(null)
+const examTaking = ref(false)
+const leaveConfirm = ref(false)
+let initialExam = typeof route.query.exam === 'string' ? route.query.exam : ''
+
+const courseExams = computed(() => [
+  ...(course.value?.exams ?? []),
+  ...chapters.value.flatMap(chapter => chapter.exams ?? []),
+])
+const examTitle = computed(() => courseExams.value.find(exam => exam.slug === examSlug.value)?.name ?? 'ข้อสอบ')
+
+function syncExamQuery() {
+  if (activeChapter.value) setQuery(activeVideo.value, activeChapter.value)
+}
+
+function openExam(slugValue: string) {
+  playerEl.value?.pause()
+  examTaking.value = false
+  leaveConfirm.value = false
+  examSlug.value = slugValue
+  outlineOpen.value = false
+  syncExamQuery()
+}
+
+function closeExam() {
+  examSlug.value = null
+  examTaking.value = false
+  leaveConfirm.value = false
+  syncExamQuery()
+}
+
+function requestCloseExam() {
+  if (examTaking.value) leaveConfirm.value = true
+  else closeExam()
+}
+
+function onExamKeydown(event: KeyboardEvent) {
+  if (event.key !== 'Escape' || !examSlug.value) return
+  if (leaveConfirm.value) leaveConfirm.value = false
+  else requestCloseExam()
+}
+
+watch(examSlug, (value) => {
+  document.body.style.overflow = value ? 'hidden' : ''
+})
+
+onMounted(() => document.addEventListener('keydown', onExamKeydown))
+onUnmounted(() => {
+  document.removeEventListener('keydown', onExamKeydown)
+  document.body.style.overflow = ''
+})
+
 watch(course, (value) => {
   if (!value?.purchased) return
+  if (initialExam && courseExams.value.some(exam => exam.slug === initialExam)) openExam(initialExam)
+  initialExam = ''
   if (!chapters.value.some(chapter => chapter.id === selectedChapterId.value)) openInitial()
 }, { immediate: true })
 

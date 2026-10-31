@@ -42,7 +42,7 @@
               </a>
             </li>
             <li>
-              <a :href="`tel:${company.phone.replace(/-/g, '')}`" class="inline-flex items-center gap-2.5 rounded-full bg-white px-4 py-2 font-bold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-50">
+              <a :href="contactInfo.phoneHref" class="inline-flex items-center gap-2.5 rounded-full bg-white px-4 py-2 font-bold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:bg-blue-50">
                 <LearnIcon name="phone" class="h-4 w-4" />
                 {{ company.phone }}
               </a>
@@ -61,13 +61,8 @@
 </template>
 
 <script setup lang="ts">
-const company = {
-  name: 'บริษัท เอทีพีกรุ๊ปหกห้าเจ็ดหก จำกัด',
-  address: '239/84 หมู่ที่ 5 ตำบลฟ้าฮ่าม อำเภอเมืองเชียงใหม่ จ.เชียงใหม่ 50000',
-  phone: '063-789-9952',
-}
-
-const mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(company.address)}`
+const company = { name: contactInfo.company, address: contactInfo.address, phone: contactInfo.phone }
+const mapUrl = contactInfo.mapUrl
 const year = new Date().getFullYear()
 
 const highlights = [
