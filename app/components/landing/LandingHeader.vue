@@ -18,9 +18,9 @@
         <div class="ms-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <NuxtLink to="/cart"
             class="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50 sm:px-3"
-            aria-label="ตะกร้า">
+            aria-label="รายการที่เลือก">
             <LearnIcon name="cart" class="h-4 w-4" />
-            <span class="hidden sm:inline">ตะกร้า</span>
+            <span class="hidden sm:inline">รายการที่เลือก</span>
             <span v-if="count"
               class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1 text-xs text-white">{{
               count }}</span>

@@ -2,14 +2,16 @@
   <div class="mt-4">
     <div v-if="testMode" class="mb-4 rounded-2xl bg-amber-50 px-4 py-3 text-xs text-amber-800 ring-1 ring-amber-200">
       <p class="font-bold">โหมดทดสอบ ไม่มีการตัดเงินจริง</p>
-      <p v-if="method === 'thai_qr'" class="mt-1">QR เป็นภาพจำลอง สแกนจ่ายไม่ได้ ใช้ปุ่มจำลองผลใต้ QR แทน</p>
+      <p v-if="type === 'qr'" class="mt-1">QR เป็นภาพจำลอง สแกนจ่ายไม่ได้ ใช้ปุ่มจำลองผลใต้ QR แทน</p>
+      <p v-else-if="type === 'wallet' && (method === 'truemoney' || method === 'wechat_pay')" class="mt-1">ใช้ระบบทดสอบของ Omise QR สแกนจ่ายจริงไม่ได้ ให้กด "เปิดหน้าชำระเงิน" แล้วเลือกจำลองผลสำเร็จหรือไม่สำเร็จ</p>
+      <p v-else-if="type === 'wallet'" class="mt-1">ใช้ระบบทดสอบของ Omise หน้าชำระเงินที่เปิดขึ้นมีปุ่มให้เลือกจำลองผลสำเร็จหรือไม่สำเร็จ</p>
       <p v-else-if="fakeCard" class="mt-1">เลขบัตรลงท้าย 0002 = ไม่ผ่าน, 3220 = ต้องยืนยัน OTP, เลขอื่น = สำเร็จ</p>
       <p v-else class="mt-1">บัตรทดสอบ Omise: 4242 4242 4242 4242 = สำเร็จ, 4111 1111 1114 0011 = ไม่ผ่าน วันหมดอายุในอนาคตและ CVV ใดก็ได้</p>
     </div>
 
     <p v-if="error" class="mb-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ error }}</p>
 
-    <template v-if="method === 'thai_qr'">
+    <template v-if="type === 'qr'">
       <div v-if="qr" class="mx-auto max-w-sm overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
         <div class="bg-[#00427A] px-4 py-3 text-center text-sm font-extrabold tracking-wide text-white">THAI QR PAYMENT</div>
         <div class="flex flex-col items-center px-5 pb-5 pt-4 text-center">
@@ -63,6 +65,59 @@
       </div>
     </template>
 
+    <template v-else-if="type === 'wallet'">
+      <div v-if="qr" class="mx-auto max-w-sm overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-200">
+        <div class="px-4 py-3 text-center text-sm font-extrabold tracking-wide text-white" :style="{ backgroundColor: brand.color }">{{ label }}</div>
+        <div class="flex flex-col items-center px-5 pb-5 pt-4 text-center">
+          <p class="text-sm text-slate-600">สแกน QR นี้ด้วยแอป {{ brand.app }}</p>
+          <img :src="qr.qr_image ?? ''" :alt="`QR สำหรับชำระด้วย ${label}`" class="mt-3 h-56 w-56 rounded-xl bg-white object-contain ring-1 ring-slate-100" :class="{ 'opacity-30': qrExpired }">
+          <p class="mt-3 text-2xl font-extrabold text-slate-900">{{ amountText(qr.amount) }}</p>
+          <p v-if="qr.fee_amount" class="text-xs text-slate-500">รวม{{ qr.fee_label || 'ค่าธรรมเนียม' }} {{ amountText(qr.fee_amount) }}</p>
+          <p v-if="!qrExpired" class="mt-2 text-sm text-slate-600">
+            QR หมดอายุใน <span class="font-mono font-bold" :style="{ color: brand.color }">{{ countdown }}</span>
+            <span class="block text-xs text-slate-400">({{ expiresAtText }})</span>
+          </p>
+          <p v-else class="mt-2 text-sm font-bold text-rose-600">QR หมดอายุแล้ว</p>
+
+          <div class="mt-4 grid w-full gap-2">
+            <template v-if="!qrExpired">
+              <button type="button" class="rounded-full px-4 py-2.5 text-sm font-bold text-white hover:opacity-90" :style="{ backgroundColor: brand.color }" @click="saveQr">
+                บันทึก QR
+              </button>
+              <a v-if="qr.authorize_uri" :href="qr.authorize_uri" class="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50">
+                เปิดหน้าชำระเงิน {{ label }}
+              </a>
+            </template>
+            <button v-else type="button" class="rounded-full bg-orange-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600 disabled:bg-slate-300" :disabled="busy" @click="payWallet">
+              {{ busy ? 'กำลังสร้าง QR...' : 'สร้าง QR ใหม่' }}
+            </button>
+          </div>
+          <p class="mt-3 text-xs text-slate-400">หน้านี้จะอัปเดตเองเมื่อชำระสำเร็จ</p>
+        </div>
+      </div>
+
+      <div v-else-if="redirectPending" class="rounded-2xl bg-slate-50 p-4 text-center text-sm text-slate-600">
+        <p class="font-bold text-slate-800">มีรายการชำระด้วย {{ label }} ที่ยังรอยืนยัน</p>
+        <p class="mt-1">ถ้ายืนยันในแอปหรือหน้าเว็บของ {{ brand.app }} แล้ว รอสักครู่ หน้านี้จะอัปเดตเอง</p>
+        <div class="mt-4 grid gap-2 sm:grid-cols-2">
+          <a :href="redirectPending.authorize_uri ?? '#'" class="rounded-full px-4 py-2.5 text-sm font-bold text-white hover:opacity-90" :style="{ backgroundColor: brand.color }">
+            ไปยืนยันการชำระต่อ
+          </a>
+          <button type="button" class="rounded-full border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-50 disabled:opacity-50" :disabled="busy" @click="payWallet">
+            เริ่มชำระใหม่
+          </button>
+        </div>
+      </div>
+
+      <div v-else class="text-center">
+        <p class="text-sm text-slate-500">ยอดชำระ {{ amountText(total) }}</p>
+        <button type="button" class="mt-3 w-full rounded-full px-5 py-3 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-50" :style="{ backgroundColor: brand.color }" :disabled="busy || loadingState" @click="payWallet">
+          {{ busy ? 'กำลังเตรียมการชำระ...' : loadingState ? 'กำลังโหลด...' : `ชำระด้วย ${label}` }}
+        </button>
+        <p class="mt-2 text-xs text-slate-400">{{ walletHint }}</p>
+      </div>
+    </template>
+
     <form v-else class="space-y-3" @submit.prevent="payCard">
       <p class="text-xs text-slate-500">ข้อมูลบัตรส่งตรงไปยังผู้ให้บริการชำระเงิน ระบบของเราไม่เก็บเลขบัตร</p>
       <label class="block text-sm font-semibold text-slate-700">
@@ -113,8 +168,16 @@ interface PaymentState {
 
 interface PaymentMethods {
   methods: string[]
+  available?: { method: string, test_mode: boolean }[]
   test_mode: { thai_qr: boolean, credit_card: boolean }
   omise_public_key: string | null
+}
+
+const WALLET_BRANDS: Record<string, { color: string, app: string }> = {
+  truemoney: { color: '#F7931E', app: 'TrueMoney' },
+  shopeepay: { color: '#EE4D2D', app: 'Shopee' },
+  rabbit_linepay: { color: '#06C755', app: 'LINE' },
+  wechat_pay: { color: '#07C160', app: 'WeChat' },
 }
 
 interface OmiseApi {
@@ -125,7 +188,9 @@ interface OmiseApi {
 const FAKE_TOKENS = { success: 'tokn_fake_success', fail: 'tokn_fake_fail', threeDs: 'tokn_fake_3ds' }
 
 const props = defineProps<{
-  method: 'thai_qr' | 'credit_card'
+  method: string
+  type: 'qr' | 'card' | 'wallet'
+  label: string
   basePath: string
   total: number
 }>()
@@ -145,14 +210,30 @@ let pollTimer: ReturnType<typeof setInterval> | undefined
 
 const fakeQr = computed(() => Boolean(methods.value?.test_mode.thai_qr))
 const fakeCard = computed(() => Boolean(methods.value?.test_mode.credit_card))
-const testMode = computed(() => (props.method === 'thai_qr'
-  ? fakeQr.value
-  : fakeCard.value || Boolean(methods.value?.omise_public_key?.startsWith('pkey_test_'))))
-
-const qr = computed(() => {
-  const payment = state.value?.payment
-  return payment?.method === 'thai_qr' && payment.status === 'pending' && payment.qr_image ? payment : null
+const testMode = computed(() => {
+  if (props.type === 'qr') return fakeQr.value
+  if (props.type === 'wallet') return Boolean(methods.value?.available?.find(entry => entry.method === props.method)?.test_mode)
+  return fakeCard.value || Boolean(methods.value?.omise_public_key?.startsWith('pkey_test_'))
 })
+
+const brand = computed(() => WALLET_BRANDS[props.method] ?? { color: '#2563EB', app: props.label })
+const isMobile = () => /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+  || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent))
+const walletHint = computed(() => {
+  if (props.method === 'truemoney' || props.method === 'wechat_pay') {
+    return import.meta.client && isMobile()
+      ? `ระบบจะเปิดแอป ${brand.value.app} ให้ยืนยันการชำระ แล้วกลับมาที่หน้านี้`
+      : `ระบบจะแสดง QR ให้สแกนด้วยแอป ${brand.value.app}`
+  }
+  return `ระบบจะพาไปยืนยันการชำระกับ ${brand.value.app} แล้วกลับมาที่หน้านี้`
+})
+
+const currentPending = computed(() => {
+  const payment = state.value?.payment
+  return payment?.method === props.method && payment.status === 'pending' ? payment : null
+})
+const qr = computed(() => (currentPending.value?.qr_image ? currentPending.value : null))
+const redirectPending = computed(() => (props.type === 'wallet' && !qr.value && currentPending.value?.authorize_uri ? currentPending.value : null))
 const qrExpired = computed(() => qr.value !== null && remaining.value <= 0)
 const countdown = computed(() => {
   const hours = Math.floor(remaining.value / 3600)
@@ -221,6 +302,38 @@ async function createQr() {
   }
   catch (exception: unknown) {
     error.value = apiErrorMessage(exception, 'สร้าง QR ไม่สำเร็จ กรุณาลองใหม่')
+  }
+  finally {
+    busy.value = false
+  }
+}
+
+async function payWallet() {
+  busy.value = true
+  error.value = ''
+  try {
+    const response = await api<{ data: PaymentState }>(`${props.basePath}/wallet`, {
+      method: 'POST',
+      body: { method: props.method, platform: isMobile() ? 'mobile' : 'desktop' },
+    })
+    if (applyState(response.data)) return
+    const payment = response.data.payment
+    if (payment?.status !== 'pending') {
+      if (!error.value) error.value = payment?.failure_message || 'เริ่มชำระเงินไม่สำเร็จ กรุณาลองใหม่'
+      return
+    }
+    if (payment.qr_image) {
+      watchQr()
+      return
+    }
+    if (payment.authorize_uri) {
+      window.location.href = payment.authorize_uri
+      return
+    }
+    error.value = 'เริ่มชำระเงินไม่สำเร็จ กรุณาลองใหม่'
+  }
+  catch (exception: unknown) {
+    error.value = apiErrorMessage(exception, 'เริ่มชำระเงินไม่สำเร็จ กรุณาลองใหม่')
   }
   finally {
     busy.value = false
@@ -363,10 +476,10 @@ onMounted(async () => {
     methods.value = null
   }
 
-  if (props.method === 'thai_qr') {
+  if (props.type !== 'card') {
     try {
       const response = await api<{ data: PaymentState }>(`${props.basePath}/status`)
-      if (!applyState(response.data) && qr.value) watchQr()
+      if (!applyState(response.data) && (qr.value || redirectPending.value)) watchQr()
     }
     catch {
       // Starting fresh is fine when the status cannot be read.

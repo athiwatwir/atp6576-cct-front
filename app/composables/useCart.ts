@@ -223,7 +223,7 @@ export function useCart() {
 
   function addBook(book: StoreBook) {
     if (!canAdd(book)) {
-      notify(book.in_stock ? 'จำนวนในตะกร้าเต็มแล้ว' : 'สินค้าหมด')
+      notify(book.in_stock ? 'เลือกครบจำนวนที่มีแล้ว' : 'สินค้าหมด')
       return
     }
 
@@ -248,7 +248,7 @@ export function useCart() {
         stock: book.stock,
       })
     }
-    notify(`ใส่ «${book.name}» ในตะกร้าแล้ว`)
+    notify(`เพิ่ม «${book.name}» ในรายการที่เลือกแล้ว`)
   }
 
   function planOf(type: CartItemType, id: number) {
@@ -272,7 +272,7 @@ export function useCart() {
       existing.thumbnail_url = item.thumbnail_url
       existing.plan_id = plan?.id ?? null
       existing.plans = plans
-      notify(changed ? `เปลี่ยน «${item.name}» เป็น ${plan?.name} แล้ว` : `«${item.name}» อยู่ในตะกร้าแล้ว`)
+      notify(changed ? `เปลี่ยน «${item.name}» เป็น ${plan?.name} แล้ว` : `«${item.name}» อยู่ในรายการที่เลือกแล้ว`)
       return true
     }
     items.value.push({
@@ -287,7 +287,7 @@ export function useCart() {
       plan_id: plan?.id ?? null,
       plans,
     })
-    notify(`ใส่ «${item.name}»${plan && plans.length > 1 ? ` (${plan.name})` : ''} ในตะกร้าแล้ว`)
+    notify(`เพิ่ม «${item.name}»${plan && plans.length > 1 ? ` (${plan.name})` : ''} ในรายการที่เลือกแล้ว`)
     return true
   }
 

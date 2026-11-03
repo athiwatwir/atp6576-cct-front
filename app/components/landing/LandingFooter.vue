@@ -79,7 +79,7 @@ const links = [
   { label: 'หนังสือ', to: '/books' },
   { label: 'ทดลองเรียน', to: '/demo' },
   { label: 'ห้องเรียนของฉัน', to: '/home' },
-  { label: 'ตะกร้าสินค้า', to: '/cart' },
+  { label: 'รายการที่เลือก', to: '/cart' },
   { label: 'ติดต่อเรา', to: '/contact' },
 ]
 </script>

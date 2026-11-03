@@ -1,7 +1,15 @@
 <template>
   <article class="mx-auto max-w-4xl px-4 py-8 md:px-6">
-    <NuxtLink :to="backTo" class="text-sm font-bold text-blue-700">{{ backLabel }}</NuxtLink>
-    <p v-if="pending" class="mt-6 text-sm text-slate-500">กำลังโหลด...</p>
+    <NuxtLink
+      :to="backTo"
+      class="group inline-flex items-center gap-2 rounded-full bg-white py-2 pe-4 ps-2 text-sm font-bold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md"
+    >
+      <span class="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white transition group-hover:-translate-x-0.5">
+        <LearnIcon name="arrow" class="h-4 w-4 rotate-180" />
+      </span>
+      {{ backLabel }}
+    </NuxtLink>
+    <PageLoading v-if="pending" />
     <p v-else-if="failed || !item" class="mt-6 rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">ไม่พบรายการนี้</p>
     <div v-else class="mt-4 grid gap-6 md:grid-cols-[1.05fr_0.95fr]">
       <div class="overflow-hidden rounded-3xl bg-sky-50">
@@ -80,28 +88,22 @@
         <h2 class="font-extrabold text-slate-900">รายละเอียด</h2>
         <p class="mt-2 whitespace-pre-line text-sm leading-6 text-slate-600">{{ item.description }}</p>
       </div>
-      <section v-if="item.item_type === 'course'" id="trial" class="md:col-span-2 space-y-4">
+      <section v-if="item.item_type === 'course'" id="trial" class="md:col-span-2 scroll-mt-32 space-y-4">
         <div class="flex flex-wrap items-center justify-between gap-3">
-          <h2 class="font-extrabold text-slate-900">เนื้อหาทั้งหมด</h2>
+          <div>
+            <h2 class="font-extrabold text-slate-900">เนื้อหาทั้งหมด</h2>
+            <p v-if="item.chapters?.length" class="mt-0.5 text-sm text-slate-500">
+              {{ item.chapters.length }} บท<template v-if="trialVideos.length"> · มีคลิปทดลองเรียน {{ trialVideos.length }} คลิป</template>
+            </p>
+          </div>
           <button
             v-if="trialVideos.length"
             type="button"
             class="inline-flex items-center gap-2 rounded-full bg-sky-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-sky-200 hover:bg-sky-600"
-            @click="play(trialVideos[0])"
+            @click="playTrial(trialVideos[0])"
           >
             <LearnIcon name="play" class="h-4 w-4" />
             ดูวิดีโอทดลองเรียน
-          </button>
-        </div>
-        <div v-if="resumeTarget && resumeTarget.video.id !== activeVideo?.id" class="flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-slate-900 px-4 py-3 text-white">
-          <p class="text-sm">
-            <span class="font-bold">ดูต่อ</span>
-            {{ resumeTarget.video.title }}
-            <span class="text-slate-300">ค้างที่ {{ clock(resumeTarget.progress.position_seconds) }}</span>
-          </p>
-          <button type="button" class="inline-flex items-center gap-1.5 rounded-full bg-sky-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-600" @click="play(resumeTarget.video)">
-            <LearnIcon name="play" class="h-3.5 w-3.5" />
-            เล่นต่อ
           </button>
         </div>
         <div v-if="activeVideo?.video_url" class="select-none overflow-hidden rounded-3xl bg-slate-900" @contextmenu.prevent>
@@ -122,135 +124,37 @@
             @pause="flushProgress(false)"
             @ended="flushProgress(true)"
           />
-          <p class="px-4 py-3 text-sm font-semibold text-white">
-            {{ activeVideo.title }}
-            <span v-if="resumedLabel" class="ms-2 text-xs font-medium text-slate-300">{{ resumedLabel }}</span>
-          </p>
+          <p class="px-4 py-3 text-sm font-semibold text-white">{{ activeVideo.title }}</p>
         </div>
         <p v-else-if="item.is_trial_available && trialVideos.length === 0" class="rounded-3xl bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-100">
           คอร์สนี้เปิดทดลองเรียน แต่ยังไม่มีคลิปทดลอง
         </p>
-        <div v-if="item.chapters?.length" class="space-y-3">
-          <article v-for="chapter in item.chapters" :key="chapter.id" class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
-            <div class="flex flex-wrap items-center gap-2">
-              <h3 class="font-bold text-slate-800">{{ chapter.title }}</h3>
-              <span v-if="chapter.videos.length" class="rounded-full px-2 py-0.5 text-xs font-bold" :class="statusClass(chapterStatus(chapter))">{{ statusLabel(chapterStatus(chapter)) }}</span>
+        <ol v-if="item.chapters?.length" class="divide-y divide-slate-100 overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
+          <li v-for="(chapter, index) in item.chapters" :key="chapter.id" class="px-5 py-4">
+            <div class="flex items-center gap-3">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-50 text-sm font-extrabold text-blue-700">{{ index + 1 }}</span>
+              <h3 class="min-w-0 flex-1 font-bold text-slate-800">{{ chapter.title }}</h3>
+              <span v-if="trialOf(chapter).length" class="shrink-0 rounded-full bg-sky-100 px-2.5 py-1 text-xs font-bold text-sky-700">ทดลองเรียนได้</span>
             </div>
-            <p v-if="chapter.description" class="mt-1 whitespace-pre-line text-sm text-slate-500">{{ chapter.description }}</p>
-            <ul v-if="chapter.videos.length" class="mt-3 space-y-2">
-              <li v-for="video in chapter.videos" :key="video.id" class="rounded-2xl bg-slate-50 px-3 py-2">
-                <div class="flex flex-wrap items-center justify-between gap-3">
-                  <span>
-                    <span class="block text-sm font-semibold text-slate-700">{{ video.title }}</span>
-                    <span v-if="video.description" class="block text-xs text-slate-500">{{ video.description }}</span>
-                    <span class="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-400">
-                      <span v-if="video.duration_seconds">{{ durationLabel(video.duration_seconds) }}</span>
-                      <span class="rounded-full px-2 py-0.5 font-bold" :class="statusClass(watchOf(video).status)">{{ statusLabel(watchOf(video).status) }}</span>
-                      <span v-if="watchOf(video).status === 'in_progress'">ค้างที่ {{ clock(watchOf(video).position_seconds) }}</span>
-                    </span>
+            <ul v-if="trialOf(chapter).length" class="mt-3 space-y-2 sm:ps-11">
+              <li v-for="video in trialOf(chapter)" :key="video.id">
+                <button
+                  type="button"
+                  class="flex w-full items-center gap-3 rounded-2xl px-3 py-2 text-start transition"
+                  :class="video.id === activeVideo?.id ? 'bg-sky-100 ring-1 ring-sky-300' : 'bg-sky-50 hover:bg-sky-100'"
+                  @click="playTrial(video)"
+                >
+                  <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-500 text-white">
+                    <LearnIcon name="play" class="h-4 w-4" />
                   </span>
-                  <button
-                    v-if="video.video_url"
-                    type="button"
-                    class="inline-flex items-center gap-1.5 rounded-full bg-sky-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-sky-600"
-                    @click="play(video)"
-                  >
-                    <LearnIcon name="play" class="h-3.5 w-3.5" />
-                    {{ playLabel(video) }}
-                  </button>
-                  <span v-else class="text-xs font-semibold text-slate-400">ดูได้หลังซื้อคอร์ส</span>
-                </div>
-                <span class="mt-2 block h-1.5 overflow-hidden rounded-full bg-slate-200">
-                  <span class="block h-full rounded-full" :class="watchOf(video).status === 'completed' ? 'bg-emerald-500' : 'bg-sky-500'" :style="{ width: `${barPercent(video)}%` }" />
-                </span>
+                  <span class="min-w-0 flex-1 text-sm font-semibold text-slate-700">{{ video.title }}</span>
+                  <span v-if="video.duration_seconds" class="shrink-0 text-xs text-slate-500">{{ clock(video.duration_seconds) }}</span>
+                </button>
               </li>
             </ul>
-            <div v-if="chapter.documents?.length" class="mt-4">
-              <h4 class="text-sm font-bold text-slate-500">เอกสาร</h4>
-              <ul class="mt-2 space-y-2">
-                <li v-for="document in chapter.documents" :key="document.id" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-orange-50 px-3 py-2">
-                  <span>
-                    <span class="block text-sm font-semibold text-slate-700">{{ document.title }}</span>
-                    <span v-if="document.description" class="block text-xs text-slate-500">{{ document.description }}</span>
-                    <span class="mt-1 block text-xs text-slate-400">
-                      <span v-if="document.file_name">{{ document.file_name }}</span>
-                      <span v-if="document.file_size"> · {{ fileSizeLabel(document.file_size) }}</span>
-                    </span>
-                  </span>
-                  <a
-                    v-if="document.file_url"
-                    :href="document.file_url"
-                    target="_blank"
-                    rel="noopener"
-                    class="inline-flex rounded-full bg-orange-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-orange-600"
-                  >
-                    เปิดเอกสาร
-                  </a>
-                  <span v-else class="text-xs font-semibold text-slate-400">เปิดได้หลังซื้อคอร์ส</span>
-                </li>
-              </ul>
-            </div>
-            <div v-if="chapter.exams?.length" class="mt-4">
-              <h4 class="text-sm font-bold text-slate-500">ข้อสอบ</h4>
-              <ul class="mt-2 space-y-2">
-                <li v-for="exam in chapter.exams" :key="exam.id">
-                  <NuxtLink v-if="item.purchased" :to="`/learn/exams/${exam.slug}?course=${item.slug}`" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
-                    <span>
-                      <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
-                      <span v-if="exam.description" class="block text-xs text-slate-500">{{ exam.description }}</span>
-                      <span class="mt-1 block text-xs text-slate-400">
-                        <span v-if="exam.question_count">{{ exam.question_count }} ข้อ</span>
-                        <span v-if="exam.duration_minutes"> · {{ exam.duration_minutes }} นาที</span>
-                      </span>
-                    </span>
-                    <span class="text-xs font-bold text-amber-700">เข้าสอบ</span>
-                  </NuxtLink>
-                  <div v-else class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
-                    <span>
-                      <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
-                      <span v-if="exam.description" class="block text-xs text-slate-500">{{ exam.description }}</span>
-                      <span class="mt-1 block text-xs text-slate-400">
-                        <span v-if="exam.question_count">{{ exam.question_count }} ข้อ</span>
-                        <span v-if="exam.duration_minutes"> · {{ exam.duration_minutes }} นาที</span>
-                      </span>
-                    </span>
-                    <span class="text-xs font-semibold text-slate-400">ทำได้หลังซื้อคอร์ส</span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-          </article>
-        </div>
+          </li>
+        </ol>
         <p v-else class="rounded-3xl bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-100">ยังไม่มีบทเรียนในคอร์สนี้</p>
-        <section v-if="item.exams?.length" class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
-          <h3 class="font-bold text-slate-800">ข้อสอบของคอร์ส</h3>
-          <ul class="mt-3 space-y-2">
-            <li v-for="exam in item.exams" :key="exam.id">
-              <NuxtLink v-if="item.purchased" :to="`/learn/exams/${exam.slug}?course=${item.slug}`" class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
-                <span>
-                  <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
-                  <span v-if="exam.description" class="block text-xs text-slate-500">{{ exam.description }}</span>
-                  <span class="mt-1 block text-xs text-slate-400">
-                    <span v-if="exam.question_count">{{ exam.question_count }} ข้อ</span>
-                    <span v-if="exam.duration_minutes"> · {{ exam.duration_minutes }} นาที</span>
-                  </span>
-                </span>
-                <span class="text-xs font-bold text-amber-700">เข้าสอบ</span>
-              </NuxtLink>
-              <div v-else class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2">
-                <span>
-                  <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
-                  <span v-if="exam.description" class="block text-xs text-slate-500">{{ exam.description }}</span>
-                  <span class="mt-1 block text-xs text-slate-400">
-                    <span v-if="exam.question_count">{{ exam.question_count }} ข้อ</span>
-                    <span v-if="exam.duration_minutes"> · {{ exam.duration_minutes }} นาที</span>
-                  </span>
-                </span>
-                <span class="text-xs font-semibold text-slate-400">ทำได้หลังซื้อคอร์ส</span>
-              </div>
-            </li>
-          </ul>
-        </section>
       </section>
       <div v-if="item.courses?.length" class="md:col-span-2">
         <h2 class="font-extrabold text-slate-900">คอร์สในหลักสูตร</h2>
@@ -269,8 +173,8 @@
 </template>
 
 <script setup lang="ts">
-import { canRenew, planDurationLabel, type CatalogItem, type CourseVideo } from '@/composables/useCart'
-import { fileSizeLabel, lessonClock, watchStatusClass, watchStatusLabel } from '@/composables/useLessonPlayer'
+import { canRenew, planDurationLabel, type CatalogItem, type CourseChapter, type CourseVideo } from '@/composables/useCart'
+import { lessonClock } from '@/composables/useLessonPlayer'
 
 const props = defineProps<{
   item: CatalogItem | null
@@ -284,40 +188,23 @@ const { addCatalog, quantityOf, planOf } = useCart()
 const {
   activeVideo,
   playerEl,
-  resumedLabel,
-  watchOf,
-  chapterStatus,
-  barPercent,
   play,
   resume,
   onTimeUpdate,
   flushProgress,
 } = useLessonPlayer(() => (props.item?.item_type === 'course' ? props.item.slug : ''))
-const statusLabel = watchStatusLabel
-const statusClass = watchStatusClass
 const clock = lessonClock
 
-const trialVideos = computed(() => (props.item?.chapters ?? []).flatMap(chapter =>
-  chapter.videos.filter(video => video.is_trial && video.video_url),
-))
-
-const resumeTarget = computed(() => {
-  const rows = (props.item?.chapters ?? []).flatMap(chapter => chapter.videos).flatMap((video) => {
-    const progress = watchOf(video)
-    if (progress.status !== 'in_progress' || !video.video_url) return []
-    return [{ video, progress }]
-  })
-  return rows.sort((a, b) => (b.progress.last_watched_at ?? '').localeCompare(a.progress.last_watched_at ?? ''))[0] ?? null
-})
-
-function playLabel(video: CourseVideo) {
-  const status = watchOf(video).status
-  if (status === 'completed') return 'ดูอีกครั้ง'
-  if (status === 'in_progress') return 'ดูต่อ'
-  return video.is_trial ? 'ดูคลิปทดลอง' : 'ดูวิดีโอ'
+function trialOf(chapter: CourseChapter) {
+  return chapter.videos.filter(video => video.is_trial && video.video_url)
 }
 
-const durationLabel = lessonClock
+const trialVideos = computed(() => (props.item?.chapters ?? []).flatMap(trialOf))
+
+function playTrial(video: CourseVideo) {
+  play(video)
+  nextTick(() => document.getElementById('trial')?.scrollIntoView({ behavior: 'smooth', block: 'start' }))
+}
 
 watch(trialVideos, (videos) => {
   if (window.location.hash === '#trial' && videos[0]) play(videos[0])
@@ -339,8 +226,8 @@ const cartLabel = computed(() => {
   const item = props.item
   if (!item) return ''
   const cartPlanId = planOf(item.item_type, item.id)
-  if (inCart.value) return cartPlanId === chosenPlanId.value ? 'อยู่ในตะกร้า' : 'เปลี่ยนเป็นแพ็กเกจนี้'
-  return item.purchased ? 'ต่ออายุ ใส่ตะกร้า' : 'ใส่ตะกร้า'
+  if (inCart.value) return cartPlanId === chosenPlanId.value ? 'อยู่ในรายการที่เลือก' : 'เปลี่ยนเป็นแพ็กเกจนี้'
+  return item.purchased ? 'เลือกต่ออายุ' : 'เลือกรายการนี้'
 })
 
 watch(() => props.item, (item) => {

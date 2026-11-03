@@ -4,7 +4,7 @@
     <div class="mx-auto max-w-6xl px-4 py-8 md:px-6">
       <CatalogGrid
         title="คอร์สเรียน"
-        description="คอร์สและหลักสูตรที่เปิดขายทั้งหมด ใส่ตะกร้าได้โดยยังไม่ต้องเข้าสู่ระบบ"
+        description="คอร์สและหลักสูตรที่เปิดขายทั้งหมด เพิ่มในรายการที่เลือกได้โดยยังไม่ต้องเข้าสู่ระบบ"
         :items="items"
         :pending="pending"
         :failed="failed"

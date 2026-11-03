@@ -4,42 +4,61 @@
       <h1 class="text-3xl font-extrabold text-slate-900">ยืนยันคำสั่งซื้อ</h1>
       <p class="mt-2 text-sm text-slate-500">{{ quote?.requires_shipping ? 'รายการนี้ต้องระบุที่อยู่จัดส่ง' : 'ตรวจยอดก่อนยืนยันคำสั่งซื้อ' }}</p>
 
-      <form class="mt-6 space-y-4 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100" @submit.prevent="submit">
-        <template v-if="!loggedIn">
+      <form class="mt-6 space-y-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100" @submit.prevent="submit">
+        <p class="text-xs text-slate-500">ช่องที่มีเครื่องหมาย <RequiredMark /> ต้องกรอก</p>
+
+        <fieldset v-if="!loggedIn" class="space-y-4">
+          <legend class="text-sm font-extrabold text-slate-900">ข้อมูลผู้ซื้อ</legend>
           <div class="rounded-2xl bg-blue-50 p-4 text-sm text-slate-700">
             <p class="font-bold text-slate-900">สั่งซื้อได้เลยโดยไม่ต้องสมัครสมาชิก</p>
-            <p class="mt-1">กรอกอีเมลเพื่อรับคำสั่งซื้อ ถ้ายังไม่มีบัญชี ระบบจะสร้างบัญชีและส่งรหัสผ่านไปที่อีเมลนี้ เพื่อใช้เข้าห้องเรียนหลังชำระเงิน</p>
+            <p class="mt-1">กรอกอีเมลเพื่อรับคำสั่งซื้อ ถ้ายังไม่มีบัญชี ระบบจะสร้างบัญชีให้ และส่งรหัสผ่านสำหรับเข้าห้องเรียนไปที่อีเมลนี้หลังชำระเงินสำเร็จ</p>
             <NuxtLink :to="{ path: '/signin', query: { redirect: '/checkout' } }" class="mt-2 inline-flex font-bold text-blue-700">มีบัญชีอยู่แล้ว เข้าสู่ระบบ</NuxtLink>
           </div>
           <label class="block text-sm font-semibold text-slate-700">
-            อีเมล
+            อีเมล<RequiredMark />
             <input v-model="form.email" type="email" required autocomplete="email" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal" @change="refreshQuote">
           </label>
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="block text-sm font-semibold text-slate-700">
-              ชื่อ-นามสกุล
+              ชื่อ-นามสกุล<RequiredMark v-if="quote?.requires_shipping" />
               <input v-model="form.name" :required="Boolean(quote?.requires_shipping)" maxlength="150" autocomplete="name" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              เบอร์โทร
+              เบอร์โทร<RequiredMark v-if="quote?.requires_shipping" />
               <input v-model="form.phone" type="tel" :required="Boolean(quote?.requires_shipping)" maxlength="30" autocomplete="tel" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
           </div>
-        </template>
+        </fieldset>
 
-        <template v-if="quote?.requires_shipping">
+        <fieldset class="space-y-4">
+          <legend class="text-sm font-extrabold text-slate-900">ข้อมูลผู้เรียน</legend>
+          <div class="grid gap-4 sm:grid-cols-2">
+            <label class="block text-sm font-semibold text-slate-700">
+              โรงเรียน<RequiredMark />
+              <input v-model="form.school_name" required maxlength="255" placeholder="เช่น โรงเรียนบ้านหนองจ็อม" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+            <label class="block text-sm font-semibold text-slate-700">
+              จังหวัด<RequiredMark />
+              <input v-model="form.student_province" required maxlength="100" list="checkout-provinces" autocomplete="address-level1" placeholder="พิมพ์หรือเลือกจังหวัด" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            </label>
+          </div>
+          <p class="text-xs text-slate-400">ใช้บันทึกในโปรไฟล์ผู้เรียน แก้ไขภายหลังได้ที่หน้าโปรไฟล์</p>
+        </fieldset>
+
+        <fieldset v-if="quote?.requires_shipping" class="space-y-4">
+          <legend class="text-sm font-extrabold text-slate-900">ที่อยู่จัดส่ง</legend>
           <template v-if="loggedIn">
             <label class="block text-sm font-semibold text-slate-700">
-              ชื่อผู้รับ
+              ชื่อผู้รับ<RequiredMark />
               <input v-model="form.name" required maxlength="150" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              เบอร์โทร
+              เบอร์โทร<RequiredMark />
               <input v-model="form.phone" required maxlength="30" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
           </template>
           <label class="block text-sm font-semibold text-slate-700">
-            ที่อยู่
+            ที่อยู่<RequiredMark />
             <input v-model="form.address_line1" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
@@ -52,19 +71,24 @@
               <input v-model="form.subdistrict" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              อำเภอ/เขต
+              อำเภอ/เขต<RequiredMark />
               <input v-model="form.district" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              จังหวัด
-              <input v-model="form.province" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              จังหวัด<RequiredMark />
+              <input v-model="form.province" required list="checkout-provinces" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              รหัสไปรษณีย์
+              รหัสไปรษณีย์<RequiredMark />
               <input v-model="form.postal_code" required inputmode="numeric" maxlength="5" pattern="[0-9]{5}" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
           </div>
-        </template>
+        </fieldset>
+
+        <datalist id="checkout-provinces">
+          <option v-for="province in thaiProvinces" :key="province" :value="province" />
+        </datalist>
+
         <label class="block text-sm font-semibold text-slate-700">
           หมายเหตุ
           <textarea v-model="form.notes" rows="2" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal" />
@@ -112,7 +136,6 @@
           </div>
         </dl>
       </template>
-      <p v-else-if="!loggedIn && !validEmail" class="mt-4 text-sm text-slate-500">กรอกอีเมลเพื่อคำนวณยอด</p>
       <p v-else class="mt-4 text-sm text-slate-500">ยังคำนวณยอดไม่ได้</p>
     </aside>
   </section>
@@ -152,11 +175,10 @@ interface GuestOrderResponse {
   order: CreatedOrder
   guest_token: string
   account_created: boolean
-  account_email_sent: boolean
 }
 
 const { api } = useApi()
-const { loggedIn, user } = useAuth()
+const { loggedIn, user, fetchUser } = useAuth()
 const { items, couponCode, clear, checkoutItems } = useCart()
 const { remember, setNotice } = useGuestOrders()
 
@@ -164,6 +186,8 @@ const form = reactive({
   email: '',
   name: '',
   phone: '',
+  school_name: '',
+  student_province: '',
   address_line1: '',
   address_line2: '',
   subdistrict: '',
@@ -190,6 +214,8 @@ watch(user, (value) => {
   if (!value) return
   if (!form.name) form.name = value.name
   if (!form.phone && value.phone) form.phone = value.phone
+  if (!form.school_name && value.school_name) form.school_name = value.school_name
+  if (!form.student_province && value.address?.province) form.student_province = value.address.province
 }, { immediate: true })
 
 let quoteRequest = 0
@@ -198,17 +224,12 @@ async function refreshQuote() {
   if (items.value.length === 0) return
   const request = ++quoteRequest
   errorMessage.value = ''
-  if (!loggedIn.value && !validEmail.value) {
-    quote.value = null
-    return
-  }
-
   quoting.value = true
   try {
     const response = await api<{ data: Quote }>(loggedIn.value ? '/checkout/quote' : '/guest/checkout/quote', {
       method: 'POST',
       body: {
-        ...(loggedIn.value ? {} : { email: form.email.trim() }),
+        ...(!loggedIn.value && validEmail.value ? { email: form.email.trim() } : {}),
         items: checkoutItems(),
         coupon_code: couponCode.value.trim() || undefined,
       },
@@ -225,7 +246,7 @@ async function refreshQuote() {
   }
 }
 
-if (loggedIn.value && items.value.length) await refreshQuote()
+if (items.value.length) await refreshQuote()
 
 function shippingBody() {
   if (!quote.value?.requires_shipping) return {}
@@ -245,6 +266,10 @@ function shippingBody() {
 
 async function submit() {
   if (!quote.value || submitting.value) return
+  if (!form.school_name.trim() || !form.student_province.trim()) {
+    errorMessage.value = 'กรุณากรอกโรงเรียนและจังหวัดของผู้เรียน'
+    return
+  }
   if (quote.value.requires_shipping && !/^\d{5}$/.test(form.postal_code.trim())) {
     errorMessage.value = 'รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก'
     return
@@ -256,6 +281,8 @@ async function submit() {
     items: checkoutItems(),
     notes: form.notes.trim() || null,
     coupon_code: couponCode.value.trim() || undefined,
+    school_name: form.school_name.trim(),
+    province: form.student_province.trim(),
     ...shippingBody(),
   }
 
@@ -263,6 +290,7 @@ async function submit() {
     if (loggedIn.value) {
       const response = await api<{ data: CreatedOrder }>('/orders', { method: 'POST', body })
       clear()
+      fetchUser()
       await navigateTo(`/orders/${response.data.id}`)
       return
     }
@@ -283,7 +311,6 @@ async function submit() {
       orderId: result.order.id,
       email,
       accountCreated: result.account_created,
-      emailSent: result.account_email_sent,
     })
     clear()
     await navigateTo(`/orders/${result.order.id}`)

@@ -1,6 +1,6 @@
 <template>
   <section class="mx-auto max-w-4xl p-4 md:p-6">
-    <p v-if="pending" class="text-sm text-slate-500">กำลังโหลดหลักสูตร...</p>
+    <PageLoading v-if="pending" message="กำลังโหลดหลักสูตร..." />
     <p v-else-if="failed || !curriculum" class="rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">ไม่พบหลักสูตรนี้</p>
 
     <div v-else-if="!curriculum.purchased" class="mx-auto max-w-xl rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-100">

@@ -7,12 +7,12 @@
         </span>
         <div>
           <h2 class="text-3xl font-extrabold text-slate-900">หนังสือ</h2>
-          <p class="mt-1 text-sm text-slate-500">เลือกเล่มที่ต้องการ แล้วใส่ตะกร้าเพื่อสั่งซื้อ</p>
+          <p class="mt-1 text-sm text-slate-500">เลือกเล่มที่ต้องการ แล้วสั่งซื้อจากรายการที่เลือก</p>
         </div>
       </div>
       <NuxtLink to="/cart" class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700 hover:text-blue-800">
         <LearnIcon name="cart" class="h-4 w-4" />
-        ตะกร้า ({{ count }})
+        รายการที่เลือก ({{ count }})
       </NuxtLink>
     </div>
 
@@ -94,8 +94,8 @@ function stockLabel(book: StoreBook) {
 
 function buttonLabel(book: StoreBook) {
   if (!book.in_stock || (book.stock !== null && book.stock <= 0)) return 'สินค้าหมด'
-  if (quantityOf('book', book.id) > 0 && !canAdd(book)) return 'ในตะกร้าแล้ว'
-  if (quantityOf('book', book.id) > 0) return 'เพิ่มในตะกร้า'
-  return 'ใส่ตะกร้า'
+  if (quantityOf('book', book.id) > 0 && !canAdd(book)) return 'เลือกครบจำนวนแล้ว'
+  if (quantityOf('book', book.id) > 0) return 'เลือกเพิ่มอีกเล่ม'
+  return 'เลือกรายการนี้'
 }
 </script>

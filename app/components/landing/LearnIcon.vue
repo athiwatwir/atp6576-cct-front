@@ -62,11 +62,32 @@
     <template v-else-if="name === 'infinity'">
       <path d="M7.5 9c-1.9 0-3.5 1.3-3.5 3s1.6 3 3.5 3c3.5 0 5.5-6 9-6 1.9 0 3.5 1.3 3.5 3s-1.6 3-3.5 3c-3.5 0-5.5-6-9-6Z" />
     </template>
+    <template v-else-if="name === 'expand'">
+      <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+    </template>
+    <template v-else-if="name === 'collapse'">
+      <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
+    </template>
+    <template v-else-if="name === 'chevron'">
+      <path d="m6 9 6 6 6-6" />
+    </template>
+    <template v-else-if="name === 'check'">
+      <path d="m5 12.5 4.5 4.5L19 7.5" />
+    </template>
+    <template v-else-if="name === 'receipt'">
+      <path d="M6 3.5h12V21l-2.4-1.6-2.4 1.6-2.4-1.6-2.4 1.6L6 21V3.5Z" />
+      <path d="M9 8h6M9 11.5h6M9 15h3.5" />
+    </template>
+    <template v-else-if="name === 'truck'">
+      <path d="M3 6.5h11v9H3v-9ZM14 9.5h3.6l3.4 3.4v2.6h-7v-6Z" />
+      <circle cx="7" cy="17.5" r="1.8" />
+      <circle cx="17" cy="17.5" r="1.8" />
+    </template>
   </svg>
 </template>
 
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'course' | 'exam' | 'book' | 'contact' | 'cart' | 'classroom' | 'login' | 'profile' | 'logout' | 'signup' | 'play' | 'arrow' | 'clock' | 'infinity' | 'phone' | 'location'
+  name: 'home' | 'course' | 'exam' | 'book' | 'contact' | 'cart' | 'classroom' | 'login' | 'profile' | 'logout' | 'signup' | 'play' | 'arrow' | 'clock' | 'infinity' | 'phone' | 'location' | 'check' | 'receipt' | 'truck' | 'expand' | 'collapse' | 'chevron'
 }>()
 </script>

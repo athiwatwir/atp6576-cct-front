@@ -13,7 +13,7 @@
       <NuxtLink v-if="purchasable" to="/cart"
         class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700">
         <LearnIcon name="cart" class="h-4 w-4" />
-        ตะกร้า ({{ count }})
+        รายการที่เลือก ({{ count }})
       </NuxtLink>
     </div>
 
@@ -81,7 +81,7 @@
               class="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-full bg-orange-500 px-3 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600"
               @click="addCatalog(item, planOf(item.item_type, item.id))">
               <LearnIcon name="cart" class="h-4 w-4 shrink-0" />
-              <span class="truncate">{{ inCart(item) ? 'อยู่ในตะกร้า' : item.purchased ? 'ต่ออายุ' : 'ใส่ตะกร้า'
+              <span class="truncate">{{ inCart(item) ? 'เลือกแล้ว' : item.purchased ? 'ต่ออายุ' : 'เลือกรายการนี้'
                 }}</span>
             </button>
           </template>

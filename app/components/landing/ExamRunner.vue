@@ -1,6 +1,12 @@
 <template>
   <div ref="rootEl">
-    <p v-if="pending" class="text-sm text-slate-500">กำลังโหลดข้อสอบ...</p>
+    <template v-if="pending">
+      <div v-if="embedded" class="flex flex-col items-center gap-3 py-16 text-sm font-semibold text-slate-500">
+        <span class="h-10 w-10 animate-spin rounded-full border-4 border-blue-100 border-t-blue-600" aria-hidden="true" />
+        กำลังโหลดข้อสอบ...
+      </div>
+      <PageLoading v-else message="กำลังโหลดข้อสอบ..." />
+    </template>
     <div v-else-if="loadError" class="rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-100">
       <p class="text-3xl" aria-hidden="true">📝</p>
       <p class="mt-2 font-extrabold text-slate-900">{{ loadError }}</p>

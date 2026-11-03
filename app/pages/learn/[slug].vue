@@ -1,6 +1,6 @@
 <template>
   <div>
-    <p v-if="pending" class="p-6 text-sm text-slate-500">กำลังโหลดบทเรียน...</p>
+    <PageLoading v-if="pending && !course" message="กำลังโหลดบทเรียน..." />
     <p v-else-if="failed || !course" class="m-6 rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">
       ไม่พบคอร์สนี้</p>
 
@@ -15,58 +15,92 @@
       </div>
     </section>
 
-    <div v-else class="md:grid md:grid-cols-[17rem_minmax(0,1fr)] lg:grid-cols-[20rem_minmax(0,1fr)]">
+    <div v-else class="md:grid md:grid-cols-[18rem_minmax(0,1fr)] lg:grid-cols-[21rem_minmax(0,1fr)]">
       <button type="button"
-        class="flex w-full items-center justify-between border-b border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-700 md:hidden"
+        class="sticky top-14 z-20 flex w-full items-center gap-3 border-b border-slate-200 bg-white/95 px-4 py-3 text-start backdrop-blur md:hidden"
         :aria-expanded="outlineOpen" aria-controls="lesson-outline" @click="outlineOpen = !outlineOpen">
-        <span>บทเรียนทั้งหมด · ผ่านแล้ว {{ completedCount }}/{{ lessons.length }}</span>
-        <span aria-hidden="true">{{ outlineOpen ? '▲' : '▼' }}</span>
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+          <LearnIcon name="course" class="h-5 w-5" />
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate text-sm font-extrabold text-slate-900">{{ activeChapter ? `บทที่ ${activeChapterIndex + 1} · ${activeChapter.title}` : 'บทเรียนทั้งหมด' }}</span>
+          <span class="mt-1 flex items-center gap-2 text-xs font-semibold text-slate-500">
+            <span class="block h-1.5 w-20 overflow-hidden rounded-full bg-slate-100">
+              <span class="block h-full rounded-full bg-emerald-500" :style="{ width: `${overallPercent}%` }" />
+            </span>
+            เรียนแล้ว {{ overallPercent }}%
+          </span>
+        </span>
+        <LearnIcon name="chevron" class="h-5 w-5 shrink-0 text-slate-400 transition" :class="{ 'rotate-180': outlineOpen }" />
       </button>
 
       <aside id="lesson-outline"
         class="border-e border-slate-200 bg-white md:sticky md:top-14 md:block md:h-[calc(100vh-3.5rem)] md:overflow-y-auto"
         :class="outlineOpen ? 'block' : 'hidden'">
         <div class="border-b border-slate-100 p-4">
-          <p class="text-xs font-bold text-blue-600">คอร์สเรียน</p>
-          <h1 class="mt-1 font-extrabold leading-snug text-slate-900">{{ course.name }}</h1>
-          <p v-if="course.access_expires_at" class="mt-1 text-xs text-slate-400">ใช้ได้ถึง {{
-            formatThaiDate(course.access_expires_at) }}</p>
-          <div class="mt-3 flex items-center justify-between text-xs font-semibold text-slate-500">
-            <span>ผ่านแล้ว {{ completedCount }}/{{ lessons.length }} บทเรียน</span>
-            <span>{{ overallPercent }}%</span>
+          <div class="flex items-center gap-3">
+            <img v-if="course.thumbnail_url" :src="course.thumbnail_url" :alt="course.name" class="h-14 w-14 shrink-0 rounded-2xl object-cover ring-1 ring-slate-100">
+            <span v-else class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-2xl" aria-hidden="true">📘</span>
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-blue-600">คอร์สเรียน</p>
+              <h1 class="font-extrabold leading-snug text-slate-900">{{ course.name }}</h1>
+            </div>
           </div>
-          <span class="mt-1.5 block h-2 overflow-hidden rounded-full bg-slate-100">
-            <span class="block h-full rounded-full bg-emerald-500" :style="{ width: `${overallPercent}%` }" />
-          </span>
+          <p v-if="course.access_expires_at" class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-500">
+            <LearnIcon name="clock" class="h-3.5 w-3.5" />
+            ใช้ได้ถึง {{ formatThaiDate(course.access_expires_at) }}
+          </p>
+          <div class="mt-4 rounded-2xl bg-emerald-50/70 p-3">
+            <div class="flex items-end justify-between">
+              <span class="text-xs font-semibold text-slate-600">เรียนจบ {{ completedCount }} จาก {{ lessons.length }} คลิป</span>
+              <span class="text-lg font-extrabold leading-none text-emerald-600">{{ overallPercent }}%</span>
+            </div>
+            <span class="mt-2 block h-2 overflow-hidden rounded-full bg-white">
+              <span class="block h-full rounded-full bg-emerald-500 transition-all" :style="{ width: `${overallPercent}%` }" />
+            </span>
+          </div>
         </div>
 
         <nav aria-label="บทเรียน" class="p-2">
-          <ul class="space-y-0.5">
+          <ul class="space-y-1">
             <li v-for="(chapter, chapterIndex) in chapters" :key="chapter.id">
-              <button type="button" class="flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-start transition"
-                :class="chapter.id === activeChapter?.id ? 'bg-blue-50 text-blue-700' : 'text-slate-700 hover:bg-slate-50'"
+              <button type="button" class="relative flex w-full items-start gap-3 rounded-2xl px-3 py-2.5 text-start transition"
+                :class="chapter.id === activeChapter?.id ? 'bg-blue-50 text-blue-800' : 'text-slate-700 hover:bg-slate-50'"
                 :aria-current="chapter.id === activeChapter?.id ? 'true' : undefined" @click="selectChapter(chapter)">
-                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold"
+                <span v-if="chapter.id === activeChapter?.id" class="absolute inset-y-2 start-0 w-1 rounded-full bg-blue-600" aria-hidden="true" />
+                <span class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold"
                   :class="chapterDotClass(chapter)" aria-hidden="true">
-                  {{ chapterStatus(chapter) === 'completed' ? '✓' : chapterIndex + 1 }}
+                  <LearnIcon v-if="chapterStatus(chapter) === 'completed'" name="check" class="h-4 w-4" />
+                  <template v-else>{{ chapterIndex + 1 }}</template>
                 </span>
                 <span class="min-w-0 flex-1">
-                  <span class="block text-sm font-bold">{{ chapter.title }}</span>
-                  <span class="block text-xs font-normal text-slate-400">{{ chapterMeta(chapter) }}</span>
+                  <span class="block text-sm font-bold leading-snug">{{ chapter.title }}</span>
+                  <span class="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs font-normal text-slate-400">
+                    <span>{{ chapterMeta(chapter) }}</span>
+                    <span v-if="chapter.documents?.length" class="inline-flex items-center gap-0.5 text-orange-500">
+                      <LearnIcon name="book" class="h-3 w-3" />{{ chapter.documents.length }}
+                    </span>
+                    <span v-if="chapter.exams?.length" class="inline-flex items-center gap-0.5 text-amber-600">
+                      <LearnIcon name="exam" class="h-3 w-3" />{{ chapter.exams.length }}
+                    </span>
+                  </span>
                 </span>
               </button>
             </li>
           </ul>
 
-          <section v-if="course.exams?.length" class="mt-2 border-t border-slate-100 px-2 pt-3">
-            <p class="text-xs font-bold text-slate-400">ข้อสอบของคอร์ส</p>
-            <ul class="mt-1 space-y-0.5">
+          <section v-if="course.exams?.length" class="mx-1 mt-3 rounded-2xl bg-amber-50 p-3">
+            <p class="flex items-start gap-1.5 text-xs font-extrabold text-amber-700">
+              <LearnIcon name="exam" class="mt-px h-4 w-4 shrink-0" />
+              <span class="min-w-0">ข้อสอบของคอร์ส {{ course.name }}</span>
+            </p>
+            <ul class="mt-2 space-y-1.5">
               <li v-for="exam in course.exams" :key="exam.id">
                 <button type="button"
-                  class="flex w-full items-start gap-2 rounded-xl px-2 py-2 text-start text-sm text-slate-600 hover:bg-amber-50"
+                  class="flex w-full items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-start text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-amber-100 transition hover:ring-amber-300"
                   @click="openExam(exam.slug)">
-                  <span class="mt-0.5 shrink-0 text-xs" aria-hidden="true">📝</span>
-                  <span>{{ exam.name }}</span>
+                  <span class="min-w-0">{{ exam.name }}</span>
+                  <span class="shrink-0 text-xs font-bold text-amber-600">เข้าสอบ</span>
                 </button>
               </li>
             </ul>
@@ -78,144 +112,179 @@
 
       <main class="min-w-0 p-4 md:p-6">
         <div class="mx-auto w-full max-w-4xl">
-        <template v-if="activeChapter">
-          <div
-            v-if="activeVideo"
-            ref="stageEl"
-            class="relative select-none overflow-hidden bg-black shadow-sm"
-            :class="isFullscreen ? 'flex h-full w-full items-center justify-center' : 'rounded-3xl'"
-            @contextmenu.prevent
-          >
-            <video
-              :key="activeVideo.id"
-              ref="playerEl"
-              :src="activeVideo.video_url ?? undefined"
-              controls
-              controlslist="nodownload nofullscreen noremoteplayback"
-              disablepictureinpicture
-              disableremoteplayback
-              playsinline
-              preload="metadata"
-              draggable="false"
-              :autoplay="autoplay"
-              class="w-full object-contain"
-              :class="isFullscreen ? 'h-full' : 'aspect-video max-h-[70vh]'"
+          <template v-if="activeChapter">
+            <div
+              v-if="activeVideo"
+              ref="stageEl"
+              class="relative select-none overflow-hidden bg-black shadow-lg shadow-slate-300/50"
+              :class="isFullscreen ? 'flex h-full w-full items-center justify-center' : 'rounded-3xl'"
               @contextmenu.prevent
-              @loadedmetadata="onLoaded"
-              @timeupdate="onTimeUpdate"
-              @pause="flushProgress(false)"
-              @ended="onEnded"
-              @error="onVideoError"
-            />
-            <span
-              v-if="watermark"
-              class="pointer-events-none absolute z-10 rounded bg-black/20 px-2 py-1 text-xs font-semibold text-white/40 transition-all duration-1000 sm:text-sm"
-              :style="{ top: `${watermarkSpot.top}%`, left: `${watermarkSpot.left}%` }"
-              aria-hidden="true"
-            >{{ watermark }}</span>
-            <button
-              type="button"
-              class="absolute end-3 top-3 z-20 rounded-full bg-black/50 px-3 py-1.5 text-xs font-bold text-white hover:bg-black/70"
-              :aria-label="isFullscreen ? 'ออกจากเต็มจอ' : 'ดูเต็มจอ'"
-              @click="toggleFullscreen"
             >
-              {{ isFullscreen ? 'ออกจากเต็มจอ' : 'เต็มจอ' }}
-            </button>
-          </div>
-          <div v-else
-            class="flex aspect-video items-center justify-center rounded-3xl bg-slate-100 text-sm text-slate-500">
-            บทนี้ไม่มีวิดีโอ ดูเอกสารและข้อสอบด้านล่าง
-          </div>
-
-          <div class="mt-5 flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0">
-              <p class="text-sm font-semibold text-blue-600">บทที่ {{ activeChapterIndex + 1 }}</p>
-              <h2 class="mt-1 text-2xl font-extrabold text-slate-900">{{ activeChapter.title }}</h2>
-              <p v-if="activeVideo" class="mt-2 flex flex-wrap items-center gap-2 text-xs">
-                <span v-if="activeChapter.videos.length > 1" class="font-semibold text-slate-600">{{ activeVideo.title
-                  }}</span>
-                <span class="rounded-full px-2 py-0.5 font-bold"
-                  :class="watchStatusClass(watchOf(activeVideo).status)">{{
-                    watchStatusLabel(watchOf(activeVideo).status) }}</span>
-                <span v-if="resumedLabel" class="text-slate-500">{{ resumedLabel }}</span>
-              </p>
-            </div>
-            <div class="flex gap-2">
-              <button type="button"
-                class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 disabled:opacity-40"
-                :disabled="!previousStep" @click="goTo(previousStep)">
-                ก่อนหน้า
+              <video
+                :key="activeVideo.id"
+                ref="playerEl"
+                :src="activeVideo.video_url ?? undefined"
+                controls
+                controlslist="nodownload nofullscreen noremoteplayback"
+                disablepictureinpicture
+                disableremoteplayback
+                playsinline
+                preload="metadata"
+                draggable="false"
+                :autoplay="autoplay"
+                class="w-full object-contain"
+                :class="isFullscreen ? 'h-full' : 'aspect-video max-h-[70vh]'"
+                @contextmenu.prevent
+                @loadedmetadata="onLoaded"
+                @timeupdate="onTimeUpdate"
+                @pause="flushProgress(false)"
+                @ended="onEnded"
+                @error="onVideoError"
+              />
+              <span
+                v-if="watermark"
+                class="pointer-events-none absolute start-3 top-3 z-10 max-w-[calc(100%-8rem)] truncate rounded bg-black/20 px-2 py-1 text-xs font-semibold text-white/40 sm:text-sm"
+                aria-hidden="true"
+              >{{ watermark }}</span>
+              <button
+                type="button"
+                class="absolute end-3 top-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/50 px-3 py-1.5 text-xs font-bold text-white backdrop-blur hover:bg-black/70"
+                :aria-label="isFullscreen ? 'ออกจากเต็มจอ' : 'ดูเต็มจอ'"
+                @click="toggleFullscreen"
+              >
+                <LearnIcon :name="isFullscreen ? 'collapse' : 'expand'" class="h-4 w-4" />
+                {{ isFullscreen ? 'ออกจากเต็มจอ' : 'เต็มจอ' }}
               </button>
-              <button type="button"
-                class="rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-slate-300"
-                :disabled="!nextStep" @click="goTo(nextStep)">
-                ถัดไป
-              </button>
             </div>
-          </div>
+            <div v-else
+              class="flex aspect-video flex-col items-center justify-center gap-3 rounded-3xl bg-gradient-to-br from-sky-50 to-blue-100 text-center">
+              <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">
+                <LearnIcon name="book" class="h-7 w-7" />
+              </span>
+              <p class="font-bold text-slate-700">บทนี้ไม่มีวิดีโอ</p>
+              <p class="text-sm text-slate-500">ดูเอกสารและทำแบบทดสอบด้านล่างได้เลย</p>
+            </div>
 
-          <div v-if="activeChapter.videos.length > 1" class="mt-4 flex flex-wrap gap-2" aria-label="วิดีโอในบทนี้">
-            <button v-for="(video, videoIndex) in activeChapter.videos" :key="video.id" type="button"
-              class="rounded-full px-3 py-1.5 text-xs font-bold transition disabled:opacity-40"
-              :class="video.id === activeVideo?.id ? 'bg-blue-600 text-white' : watchOf(video).status === 'completed' ? 'bg-emerald-100 text-emerald-700' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'"
-              :disabled="!video.video_url" @click="select(video, true)">
-              {{ watchOf(video).status === 'completed' ? '✓ ' : '' }}ตอนที่ {{ videoIndex + 1 }}
-            </button>
-          </div>
-
-          <p v-if="justFinished && nextStep" class="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-            ดูจบแล้ว ถัดไปคือ «{{ nextStep.chapter.id === activeChapter.id ? nextStep.video?.title :
-              nextStep.chapter.title }}»
-          </p>
-          <p v-if="activeVideo?.description" class="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">{{
-            activeVideo.description }}</p>
-          <p v-else-if="activeChapter.description" class="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">{{
-            activeChapter.description }}</p>
-
-          <section v-if="activeChapter.exams?.length"
-            class="mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
-            <h3 class="font-bold text-slate-800">ข้อสอบท้ายบท</h3>
-            <ul class="mt-3 space-y-2">
-              <li v-for="exam in activeChapter.exams" :key="exam.id">
-                <button type="button"
-                  class="flex w-full flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2 text-start transition hover:bg-amber-100"
-                  @click="openExam(exam.slug)">
-                  <span>
-                    <span class="block text-sm font-semibold text-slate-700">{{ exam.name }}</span>
-                    <span class="block text-xs text-slate-400">
-                      <template v-if="exam.question_count">{{ exam.question_count }} ข้อ</template>
-                      <template v-if="exam.duration_minutes"> · {{ exam.duration_minutes }} นาที</template>
-                    </span>
-                  </span>
-                  <span class="rounded-full bg-amber-500 px-3 py-1.5 text-xs font-bold text-white">เข้าสอบ</span>
-                </button>
-              </li>
-            </ul>
-          </section>
-
-          <section v-if="activeChapter.documents?.length"
-            class="mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
-            <h3 class="font-bold text-slate-800">เอกสารประกอบบทนี้</h3>
-            <ul class="mt-3 space-y-2">
-              <li v-for="document in activeChapter.documents" :key="document.id"
-                class="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-orange-50 px-3 py-2">
-                <span>
-                  <span class="block text-sm font-semibold text-slate-700">{{ document.title }}</span>
-                  <span class="block text-xs text-slate-400">
-                    {{ document.file_name }}<template v-if="document.file_size"> · {{ fileSizeLabel(document.file_size)
-                      }}</template>
-                  </span>
+            <section class="mt-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-100 md:p-5">
+              <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+                <span class="rounded-full bg-blue-50 px-2.5 py-1 text-blue-700">บทที่ {{ activeChapterIndex + 1 }} จาก {{ chapters.length }}</span>
+                <span v-if="activeVideo" class="rounded-full px-2.5 py-1" :class="watchStatusClass(watchOf(activeVideo).status)">
+                  {{ watchStatusLabel(watchOf(activeVideo).status) }}
                 </span>
-                <a v-if="document.file_url" :href="document.file_url" target="_blank" rel="noopener"
-                  class="rounded-full bg-orange-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-orange-600">เปิดเอกสาร</a>
-              </li>
-            </ul>
-          </section>
-        </template>
+                <span v-if="activeVideo?.duration_seconds" class="inline-flex items-center gap-1 text-slate-400">
+                  <LearnIcon name="clock" class="h-3.5 w-3.5" />
+                  {{ lessonClock(activeVideo.duration_seconds) }}
+                </span>
+                <span v-if="resumedLabel" class="font-semibold text-sky-600">{{ resumedLabel }}</span>
+              </div>
+              <h2 class="mt-2 text-xl font-extrabold leading-snug text-slate-900 md:text-2xl">{{ activeChapter.title }}</h2>
+              <p v-if="activeVideo && activeChapter.videos.length > 1" class="mt-0.5 text-sm font-semibold text-slate-500">{{ activeVideo.title }}</p>
 
-        <div v-else class="rounded-3xl bg-white p-6 text-sm text-slate-500 shadow-sm ring-1 ring-slate-100">
-          {{ chapters.length ? 'เลือกบทเรียนจากรายการด้านซ้าย' : 'คอร์สนี้ยังไม่มีบทเรียน' }}
-        </div>
+              <div v-if="activeChapter.videos.length > 1" class="mt-3 flex flex-wrap gap-2" aria-label="วิดีโอในบทนี้">
+                <button v-for="(video, videoIndex) in activeChapter.videos" :key="video.id" type="button"
+                  class="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold transition disabled:opacity-40"
+                  :class="video.id === activeVideo?.id ? 'bg-blue-600 text-white shadow-sm shadow-blue-200' : watchOf(video).status === 'completed' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-white text-slate-600 ring-1 ring-slate-200 hover:bg-slate-50'"
+                  :disabled="!video.video_url" @click="select(video, true)">
+                  <LearnIcon v-if="watchOf(video).status === 'completed'" name="check" class="h-3.5 w-3.5" />
+                  ตอนที่ {{ videoIndex + 1 }}
+                </button>
+              </div>
+
+              <div class="mt-4 grid grid-cols-2 gap-2 border-t border-slate-100 pt-4">
+                <button type="button"
+                  class="flex min-w-0 items-center gap-2 rounded-2xl border border-slate-200 px-3 py-2.5 text-start transition hover:bg-slate-50 disabled:opacity-40"
+                  :disabled="!previousStep" @click="goTo(previousStep)">
+                  <LearnIcon name="arrow" class="h-4 w-4 shrink-0 rotate-180 text-slate-400" />
+                  <span class="min-w-0">
+                    <span class="block text-xs font-semibold text-slate-400">ก่อนหน้า<template v-if="previousStep"> · {{ stepKicker(previousStep) }}</template></span>
+                    <span class="block truncate text-sm font-bold text-slate-700">{{ previousStep ? stepLabel(previousStep) : '-' }}</span>
+                  </span>
+                </button>
+                <button type="button"
+                  class="flex min-w-0 items-center justify-end gap-2 rounded-2xl bg-blue-600 px-3 py-2.5 text-end text-white shadow-sm shadow-blue-200 transition hover:bg-blue-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:shadow-none"
+                  :disabled="!nextStep" @click="goTo(nextStep)">
+                  <span class="min-w-0">
+                    <span class="block text-xs font-semibold text-blue-100">ถัดไป<template v-if="nextStep"> · {{ stepKicker(nextStep) }}</template></span>
+                    <span class="block truncate text-sm font-bold">{{ nextStep ? stepLabel(nextStep) : 'บทสุดท้ายแล้ว' }}</span>
+                  </span>
+                  <LearnIcon name="arrow" class="h-4 w-4 shrink-0" />
+                </button>
+              </div>
+            </section>
+
+            <div v-if="justFinished" class="mt-4 flex flex-wrap items-center gap-3 rounded-3xl bg-emerald-50 p-4 ring-1 ring-emerald-100">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+                <LearnIcon name="check" class="h-5 w-5" />
+              </span>
+              <p class="min-w-0 flex-1 text-sm text-emerald-800">
+                <span class="block font-extrabold">{{ courseDone ? 'เรียนครบทุกคลิปแล้ว เก่งมาก!' : 'ดูคลิปนี้จบแล้ว' }}</span>
+                <span v-if="nextStep" class="block">ถัดไป {{ stepKicker(nextStep) }}: {{ stepLabel(nextStep) }}</span>
+              </p>
+              <button v-if="nextStep" type="button" class="inline-flex items-center gap-1.5 rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700" @click="goTo(nextStep)">
+                เรียนต่อ
+                <LearnIcon name="arrow" class="h-4 w-4" />
+              </button>
+            </div>
+
+            <section v-if="lessonDescription" class="mt-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-100 md:p-5">
+              <h3 class="text-sm font-extrabold text-slate-900">เกี่ยวกับบทเรียนนี้</h3>
+              <p class="mt-2 whitespace-pre-line text-sm leading-7 text-slate-600" :class="{ 'line-clamp-3': !descriptionOpen }">{{ lessonDescription }}</p>
+              <button v-if="lessonDescription.length > 160" type="button" class="mt-1 text-sm font-bold text-blue-700 hover:underline" @click="descriptionOpen = !descriptionOpen">
+                {{ descriptionOpen ? 'ย่อ' : 'อ่านเพิ่ม' }}
+              </button>
+            </section>
+
+            <div v-if="activeChapter.documents?.length || activeChapter.exams?.length" class="mt-4 grid gap-4" :class="{ 'lg:grid-cols-2': activeChapter.documents?.length && activeChapter.exams?.length }">
+              <section v-if="activeChapter.exams?.length" class="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-100 md:p-5">
+                <h3 class="flex items-center gap-2 text-sm font-extrabold text-slate-900">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-600"><LearnIcon name="exam" class="h-4 w-4" /></span>
+                  แบบทดสอบท้ายบท
+                </h3>
+                <ul class="mt-3 space-y-2">
+                  <li v-for="exam in activeChapter.exams" :key="exam.id">
+                    <button type="button"
+                      class="flex w-full items-center justify-between gap-3 rounded-2xl bg-amber-50 px-3 py-2.5 text-start transition hover:bg-amber-100"
+                      @click="openExam(exam.slug)">
+                      <span class="min-w-0">
+                        <span class="block text-sm font-bold text-slate-800">{{ exam.name }}</span>
+                        <span class="block text-xs text-slate-500">
+                          <template v-if="exam.question_count">{{ exam.question_count }} ข้อ</template>
+                          <template v-if="exam.duration_minutes"> · {{ exam.duration_minutes }} นาที</template>
+                        </span>
+                      </span>
+                      <span class="shrink-0 rounded-full bg-amber-500 px-3 py-1.5 text-xs font-bold text-white">เข้าสอบ</span>
+                    </button>
+                  </li>
+                </ul>
+              </section>
+
+              <section v-if="activeChapter.documents?.length" class="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-100 md:p-5">
+                <h3 class="flex items-center gap-2 text-sm font-extrabold text-slate-900">
+                  <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-orange-100 text-orange-600"><LearnIcon name="book" class="h-4 w-4" /></span>
+                  เอกสารประกอบ
+                </h3>
+                <ul class="mt-3 space-y-2">
+                  <li v-for="document in activeChapter.documents" :key="document.id">
+                    <component :is="document.file_url ? 'a' : 'div'" :href="document.file_url ?? undefined" target="_blank" rel="noopener"
+                      class="flex items-center justify-between gap-3 rounded-2xl bg-orange-50 px-3 py-2.5 transition" :class="{ 'hover:bg-orange-100': document.file_url }">
+                      <span class="min-w-0">
+                        <span class="block truncate text-sm font-bold text-slate-800">{{ document.title }}</span>
+                        <span class="block truncate text-xs text-slate-500">
+                          {{ document.file_name }}<template v-if="document.file_size"> · {{ fileSizeLabel(document.file_size) }}</template>
+                        </span>
+                      </span>
+                      <span v-if="document.file_url" class="shrink-0 rounded-full bg-orange-500 px-3 py-1.5 text-xs font-bold text-white">เปิด</span>
+                    </component>
+                  </li>
+                </ul>
+              </section>
+            </div>
+          </template>
+
+          <div v-else class="flex flex-col items-center gap-3 rounded-3xl bg-white p-10 text-center shadow-sm ring-1 ring-slate-100">
+            <span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600"><LearnIcon name="course" class="h-7 w-7" /></span>
+            <p class="text-sm text-slate-500">{{ chapters.length ? 'เลือกบทเรียนจากรายการด้านซ้าย' : 'คอร์สนี้ยังไม่มีบทเรียน' }}</p>
+          </div>
         </div>
       </main>
     </div>
@@ -309,16 +378,9 @@ interface LessonStep {
 
 const stageEl = ref<HTMLElement | null>(null)
 const isFullscreen = ref(false)
-const watermarkSpot = reactive({ top: 8, left: 6 })
 const watermark = computed(() => (user.value ? `${user.value.email} · #${user.value.id}` : ''))
-let watermarkTimer: ReturnType<typeof setInterval> | undefined
 let pendingSeek: number | null = null
 let retriedVideoId: number | null = null
-
-function moveWatermark() {
-  watermarkSpot.top = 6 + Math.random() * 78
-  watermarkSpot.left = 4 + Math.random() * 60
-}
 
 function syncFullscreen() {
   isFullscreen.value = Boolean(stageEl.value && document.fullscreenElement === stageEl.value)
@@ -353,12 +415,10 @@ async function onVideoError() {
 
 onMounted(() => {
   document.addEventListener('fullscreenchange', syncFullscreen)
-  watermarkTimer = setInterval(moveWatermark, 15000)
 })
 
 onUnmounted(() => {
   document.removeEventListener('fullscreenchange', syncFullscreen)
-  if (watermarkTimer) clearInterval(watermarkTimer)
 })
 
 const outlineOpen = ref(false)
@@ -381,6 +441,26 @@ const stepIndex = computed(() => steps.value.findIndex(step => (activeVideo.valu
   : step.video === null && step.chapter.id === selectedChapterId.value)))
 const previousStep = computed(() => (stepIndex.value > 0 ? steps.value[stepIndex.value - 1] ?? null : null))
 const nextStep = computed(() => (stepIndex.value >= 0 ? steps.value[stepIndex.value + 1] ?? null : null))
+const courseDone = computed(() => lessons.value.length > 0 && completedCount.value === lessons.value.length)
+const lessonDescription = computed(() => activeVideo.value?.description || activeChapter.value?.description || '')
+const descriptionOpen = ref(false)
+
+watch(() => [selectedChapterId.value, activeVideo.value?.id], () => {
+  descriptionOpen.value = false
+})
+
+function isPartStep(step: LessonStep) {
+  return step.chapter.id === activeChapter.value?.id && Boolean(step.video) && step.chapter.videos.length > 1
+}
+
+function stepKicker(step: LessonStep) {
+  if (isPartStep(step)) return `ตอนที่ ${step.chapter.videos.findIndex(video => video.id === step.video?.id) + 1}`
+  return `บทที่ ${chapters.value.findIndex(chapter => chapter.id === step.chapter.id) + 1}`
+}
+
+function stepLabel(step: LessonStep) {
+  return isPartStep(step) ? step.video!.title : step.chapter.title
+}
 
 function chapterMeta(chapter: CourseChapter) {
   const videos = chapter.videos.filter(video => video.video_url)

@@ -1,7 +1,7 @@
 <template>
   <section>
     <h1 class="text-3xl font-extrabold text-slate-900">ประวัติการสั่งซื้อ</h1>
-    <p v-if="pending" class="mt-4 text-sm text-slate-500">กำลังโหลด...</p>
+    <PageLoading v-if="pending" message="กำลังโหลดประวัติการสั่งซื้อ..." />
     <p v-else-if="errorMessage" class="mt-4 text-sm text-rose-600">{{ errorMessage }}</p>
     <p v-else-if="orders.length === 0" class="mt-4 rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">ยังไม่มีคำสั่งซื้อ</p>
     <ul v-else class="mt-4 space-y-3">

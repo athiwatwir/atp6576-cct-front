@@ -1,6 +1,6 @@
 <template>
   <section class="mx-auto max-w-3xl px-4 py-10 md:px-6">
-    <p v-if="pending" class="text-sm text-slate-500">กำลังโหลดคำสั่งซื้อ...</p>
+    <PageLoading v-if="pending" message="กำลังโหลดคำสั่งซื้อ..." />
     <p v-else-if="errorMessage" class="rounded-3xl bg-white p-6 text-sm text-rose-600 ring-1 ring-slate-100">{{ errorMessage }}</p>
 
     <template v-else-if="order">
@@ -8,19 +8,34 @@
       <h1 class="mt-2 text-3xl font-extrabold text-slate-900">คำสั่งซื้อ {{ order.order_no }}</h1>
       <p class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold" :class="statusClass">{{ order.payment_status_label }}</p>
 
-      <div v-if="notice" class="mt-6 rounded-3xl bg-blue-50 p-5 text-sm text-slate-700">
+      <div v-if="notice && order.payment_status !== 'paid'" class="mt-6 rounded-3xl bg-blue-50 p-5 text-sm text-slate-700">
         <p class="font-bold text-slate-900">{{ notice.accountCreated ? 'สร้างบัญชีให้แล้ว' : 'เพิ่มคำสั่งซื้อในบัญชีเดิมแล้ว' }}</p>
-        <p v-if="notice.accountCreated && notice.emailSent" class="mt-1">ส่งรหัสผ่านและเลขคำสั่งซื้อไปที่ {{ notice.email }} แล้ว ใช้อีเมลนี้กับรหัสผ่านจากอีเมลเข้าสู่ระบบเพื่อเข้าห้องเรียนหลังชำระเงิน</p>
-        <p v-else-if="notice.emailSent" class="mt-1">อีเมล {{ notice.email }} มีบัญชีอยู่แล้ว เข้าสู่ระบบด้วยรหัสผ่านเดิมเพื่อเข้าห้องเรียนหลังชำระเงิน</p>
-        <p v-else class="mt-1">ส่งอีเมลไปที่ {{ notice.email }} ไม่สำเร็จ คำสั่งซื้อยังถูกสร้างแล้ว ถ้าไม่มีรหัสผ่านเข้าสู่ระบบ กรุณาติดต่อแอดมิน</p>
+        <p v-if="notice.accountCreated" class="mt-1">
+          หลังชำระเงินสำเร็จ ระบบจะส่งรหัสผ่านสำหรับเข้าสู่ระบบพร้อมใบเสร็จไปที่ <span class="font-semibold">{{ notice.email }}</span>
+        </p>
+        <p v-else class="mt-1">
+          อีเมล <span class="font-semibold">{{ notice.email }}</span> มีบัญชีอยู่แล้ว หลังชำระเงินเข้าสู่ระบบด้วยรหัสผ่านเดิมเพื่อเข้าห้องเรียน ถ้าจำรหัสผ่านไม่ได้ กรุณาติดต่อแอดมิน
+        </p>
       </div>
 
       <div class="mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
         <ul class="space-y-3 text-sm">
-          <li v-for="item in order.items" :key="`${item.type}-${item.id}`" class="flex justify-between gap-3">
-            <span>
-              {{ item.name }} × {{ item.quantity }}
-              <span v-if="item.plan" class="block text-xs text-slate-400">{{ planDurationLabel(item.plan) }}</span>
+          <li v-for="item in order.items" :key="`${item.type}-${item.id}`" class="flex items-center gap-3">
+            <component
+              :is="itemLink(item) ? NuxtLink : 'span'"
+              :to="itemLink(item) ?? undefined"
+              class="block aspect-[4/3] w-20 shrink-0 overflow-hidden rounded-2xl bg-sky-50 ring-1 ring-slate-100 sm:w-24"
+            >
+              <img v-if="item.thumbnail_url" :src="item.thumbnail_url" :alt="item.name" class="h-full w-full object-cover" loading="lazy">
+              <span v-else class="flex h-full w-full items-center justify-center text-2xl" aria-hidden="true">{{ itemEmoji(item.type) }}</span>
+            </component>
+            <span class="min-w-0 flex-1">
+              <component :is="itemLink(item) ? NuxtLink : 'span'" :to="itemLink(item) ?? undefined" class="block font-semibold text-slate-800" :class="{ 'hover:text-blue-700': itemLink(item) }">
+                {{ item.name }}
+              </component>
+              <span class="block text-xs text-slate-400">
+                {{ itemTypeLabel(item.type) }} · จำนวน {{ item.quantity }}<template v-if="item.plan"> · {{ planDurationLabel(item.plan) }}</template>
+              </span>
             </span>
             <span class="shrink-0 font-semibold">{{ formatBaht(item.total_price) }}</span>
           </li>
@@ -54,18 +69,65 @@
         </p>
       </div>
 
-      <div v-if="order.payment_status === 'paid'" class="mt-6 rounded-3xl bg-emerald-50 p-5 text-sm text-emerald-700">
-        <p class="font-bold">ชำระเงินแล้ว</p>
-        <template v-if="order.kind === 'enrollment'">
-          <template v-if="loggedIn">
-            <p class="mt-1">เปิดสิทธิ์เรียนให้แล้ว เข้าเรียนได้จากเมนูเข้าห้องเรียน</p>
-            <NuxtLink to="/home" class="mt-3 inline-flex rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700">เข้าห้องเรียน</NuxtLink>
+      <div v-if="order.payment_status === 'paid'" class="mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-6 shadow-sm ring-1 ring-emerald-100 md:p-7">
+        <div class="flex items-start gap-4">
+          <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-4 ring-emerald-100">
+            <LearnIcon name="check" class="h-8 w-8" />
+          </span>
+          <div class="min-w-0">
+            <p class="text-2xl font-extrabold text-emerald-700">ชำระเงินเรียบร้อย</p>
+            <p class="mt-1 text-sm text-slate-500">
+              ยอด {{ formatBaht(order.payment?.amount ?? order.total) }}
+              <template v-if="order.payment?.method_label"> · {{ order.payment.method_label }}</template>
+              <template v-if="order.paid_at"> · {{ formatThaiDate(order.paid_at) }}</template>
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-5 rounded-2xl bg-white/80 p-4 text-base text-slate-700 ring-1 ring-emerald-100">
+          <template v-if="order.kind === 'enrollment'">
+            <p class="flex items-start gap-2.5">
+              <LearnIcon name="classroom" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+              <span>
+                <span class="font-bold text-slate-900">เปิดสิทธิ์เรียนให้แล้ว</span>
+                <span class="block text-sm text-slate-500">{{ loggedIn ? 'เข้าเรียนได้ทันทีจากห้องเรียนของฉัน' : autoLogin ? 'กดปุ่มด้านล่างเพื่อเข้าสู่ระบบและเริ่มเรียนได้ทันที ครั้งต่อไปใช้อีเมลที่สั่งซื้อกับรหัสผ่านที่ส่งไปทางอีเมล' : 'เข้าสู่ระบบด้วยอีเมลที่ใช้สั่งซื้อ และรหัสผ่านที่ส่งไปทางอีเมล เพื่อเข้าเรียน' }}</span>
+              </span>
+            </p>
           </template>
           <template v-else>
-            <p class="mt-1">เปิดสิทธิ์เรียนให้แล้ว เข้าสู่ระบบด้วยอีเมลที่ใช้สั่งซื้อและรหัสผ่านจากอีเมลเพื่อเข้าเรียน</p>
-            <NuxtLink :to="{ path: '/signin', query: { redirect: '/home' } }" class="mt-3 inline-flex rounded-full bg-emerald-600 px-4 py-2 text-sm font-bold text-white hover:bg-emerald-700">เข้าสู่ระบบเพื่อเข้าเรียน</NuxtLink>
+            <p class="flex items-start gap-2.5">
+              <LearnIcon name="truck" class="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" />
+              <span>
+                <span class="font-bold text-slate-900">{{ order.shipping?.status_label || 'เตรียมจัดส่งหนังสือ' }}</span>
+                <span v-if="order.shipping?.tracking_number" class="block text-sm text-slate-500">เลขพัสดุ <span class="font-mono font-bold text-slate-800">{{ order.shipping.tracking_number }}</span></span>
+                <span v-else class="block text-sm text-slate-500">เราจะแจ้งเลขพัสดุในหน้านี้เมื่อจัดส่งแล้ว</span>
+              </span>
+            </p>
           </template>
-        </template>
+        </div>
+
+        <div class="mt-5 flex flex-wrap gap-3">
+          <template v-if="order.kind === 'enrollment'">
+            <NuxtLink v-if="loggedIn" to="/home" class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-base font-bold text-white shadow-md shadow-emerald-200 transition hover:-translate-y-0.5 hover:bg-emerald-700">
+              <LearnIcon name="classroom" class="h-5 w-5" />
+              เข้าห้องเรียน
+            </NuxtLink>
+            <button v-else-if="autoLogin" type="button" class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-base font-bold text-white shadow-md shadow-emerald-200 transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:translate-y-0 disabled:bg-slate-300 disabled:shadow-none" :disabled="loggingIn" @click="enterClassroom">
+              <LearnIcon name="login" class="h-5 w-5" />
+              {{ loggingIn ? 'กำลังเข้าสู่ระบบ...' : 'เข้าสู่ระบบและเข้าเรียนเลย' }}
+            </button>
+            <NuxtLink v-else :to="{ path: '/signin', query: { redirect: '/home' } }" class="inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 text-base font-bold text-white shadow-md shadow-emerald-200 transition hover:-translate-y-0.5 hover:bg-emerald-700">
+              <LearnIcon name="login" class="h-5 w-5" />
+              เข้าสู่ระบบเพื่อเข้าเรียน
+            </NuxtLink>
+          </template>
+          <a v-if="order.receipt?.download_url" :href="order.receipt.download_url" target="_blank" rel="noopener" class="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 text-base font-bold text-emerald-700 ring-1 ring-emerald-200 transition hover:-translate-y-0.5 hover:bg-emerald-50">
+            <LearnIcon name="receipt" class="h-5 w-5" />
+            ดาวน์โหลดใบเสร็จ
+            <span v-if="order.receipt.receipt_no" class="text-sm font-semibold text-emerald-600/70">{{ order.receipt.receipt_no }}</span>
+          </a>
+        </div>
+        <p v-if="loginError" class="mt-3 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ loginError }}</p>
       </div>
 
       <template v-else-if="payable">
@@ -100,9 +162,11 @@
           </div>
 
           <OnlinePaymentPanel
-            v-if="selectedOption && (selectedOption.method === 'thai_qr' || selectedOption.method === 'credit_card')"
+            v-if="selectedOption && selectedType && selectedType !== 'transfer'"
             :key="selectedOption.method"
             :method="selectedOption.method"
+            :type="selectedType"
+            :label="selectedOption.label"
             :base-path="paymentBasePath"
             :total="selectedOption.total"
             @paid="onPaid"
@@ -148,16 +212,22 @@
 </template>
 
 <script setup lang="ts">
+import { NuxtLink } from '#components'
 import { planDurationLabel } from '@/composables/useCart'
 
 definePageMeta({ layout: 'landing' })
 
-type PaymentMethod = 'thai_qr' | 'credit_card' | 'bank_transfer'
+type PaymentMethod = string
+type PaymentType = 'qr' | 'card' | 'wallet' | 'transfer'
+
+const LEGACY_TYPES: Record<string, PaymentType> = { thai_qr: 'qr', credit_card: 'card', bank_transfer: 'transfer' }
 
 interface OrderItem {
   type: string
   id: number
   name: string
+  slug?: string | null
+  thumbnail_url?: string | null
   quantity: number
   unit_price: number
   total_price: number
@@ -173,11 +243,15 @@ interface StoreOrder {
   total: number
   payment_status: string
   payment_status_label: string
+  paid_at?: string | null
+  receipt?: { receipt_no: string, download_url: string } | null
   shipping: {
     name: string
     address_line1: string
     province: string
     postal_code: string
+    status_label?: string | null
+    tracking_number?: string | null
   } | null
   payment: {
     method: PaymentMethod | null
@@ -194,6 +268,7 @@ interface StoreOrder {
 
 interface PaymentOption {
   method: PaymentMethod
+  type?: PaymentType
   label: string
   fee_label: string | null
   order_amount: number
@@ -204,13 +279,14 @@ interface PaymentOption {
 interface GuestOrderView {
   order: StoreOrder
   payment_options: PaymentOption[]
+  auto_login?: boolean
 }
 
 const route = useRoute()
 const router = useRouter()
 const config = useRuntimeConfig()
 const { api } = useApi()
-const { loggedIn, fetchUser } = useAuth()
+const { loggedIn, fetchUser, loginWithGuestOrder } = useAuth()
 const { tokenFor, remember, takeNotice } = useGuestOrders()
 
 const orderId = computed(() => {
@@ -219,9 +295,9 @@ const orderId = computed(() => {
 })
 
 const queryToken = typeof route.query.guest_token === 'string' ? route.query.guest_token : ''
-const returnedFromCard = route.query.payment_return === 'card'
+const returnedFromGateway = typeof route.query.payment_return === 'string'
 if (queryToken) remember(orderId.value!, queryToken)
-if (queryToken || returnedFromCard) await router.replace({ query: {} })
+if (queryToken || returnedFromGateway) await router.replace({ query: {} })
 const guestToken = queryToken || tokenFor(orderId.value!)
 const guestMode = ref(false)
 const notice = ref(takeNotice(orderId.value!))
@@ -237,6 +313,9 @@ const options = ref<PaymentOption[]>([])
 const optionsPending = ref(false)
 const optionsError = ref('')
 const method = ref<PaymentMethod | null>(null)
+const autoLogin = ref(false)
+const loggingIn = ref(false)
+const loginError = ref('')
 const slipError = ref('')
 const slipSuccess = ref('')
 const uploading = ref(false)
@@ -250,6 +329,10 @@ const payable = computed(() => {
 })
 
 const selectedOption = computed(() => options.value.find(option => option.method === method.value) ?? null)
+const selectedType = computed<PaymentType | null>(() => {
+  const option = selectedOption.value
+  return option ? option.type ?? LEGACY_TYPES[option.method] ?? null : null
+})
 
 const paymentBasePath = computed(() => (guestMode.value
   ? `/guest/orders/${guestToken}/payment`
@@ -262,6 +345,24 @@ const statusClass = computed(() => {
   if (status === 'failed' || status === 'refunded') return 'bg-rose-100 text-rose-700'
   return 'bg-blue-100 text-blue-700'
 })
+
+const ITEM_PATHS: Record<string, string> = { course: '/courses', curriculum: '/curriculums', exam: '/exams', book: '/books' }
+const ITEM_LABELS: Record<string, string> = { course: 'คอร์สเรียน', curriculum: 'หลักสูตร', exam: 'ข้อสอบ', book: 'หนังสือ' }
+
+function itemLink(item: OrderItem) {
+  const base = ITEM_PATHS[item.type]
+  return base && item.slug ? `${base}/${item.slug}` : null
+}
+
+function itemTypeLabel(type: string) {
+  return ITEM_LABELS[type] ?? 'สินค้า'
+}
+
+function itemEmoji(type: string) {
+  if (type === 'book') return '📚'
+  if (type === 'exam') return '📝'
+  return '📘'
+}
 
 function setOrder(value: StoreOrder) {
   order.value = value
@@ -285,6 +386,7 @@ async function loadGuestOrder() {
   const response = await api<{ data: GuestOrderView }>(`/guest/orders/${guestToken}`)
   guestMode.value = true
   setOrder(response.data.order)
+  autoLogin.value = Boolean(response.data.auto_login)
   options.value = response.data.payment_options ?? []
   pickMethod()
 }
@@ -357,6 +459,23 @@ async function onPaid() {
   }
   catch {
     // The panel already shows the payment as successful.
+  }
+}
+
+async function enterClassroom() {
+  if (!guestToken || loggingIn.value) return
+  loggingIn.value = true
+  loginError.value = ''
+  try {
+    await loginWithGuestOrder(guestToken)
+    await navigateTo('/home')
+  }
+  catch (error: unknown) {
+    autoLogin.value = false
+    loginError.value = apiErrorMessage(error, 'เข้าสู่ระบบอัตโนมัติไม่สำเร็จ กรุณาเข้าสู่ระบบด้วยอีเมลและรหัสผ่าน')
+  }
+  finally {
+    loggingIn.value = false
   }
 }
 

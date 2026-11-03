@@ -132,6 +132,14 @@ export function useAuth() {
     user.value = response.user
   }
 
+  async function loginWithGuestOrder(guestToken: string) {
+    const { api } = useApi()
+    const response = await api<AuthResponse>(`/guest/orders/${guestToken}/login`, { method: 'POST' })
+    if (import.meta.client) sessionStorage.removeItem(PROFILE_REMINDER_KEY)
+    token.value = response.token
+    user.value = response.user
+  }
+
   async function register(payload: {
     name: string
     email: string
@@ -241,5 +249,5 @@ export function useAuth() {
     await navigateTo('/')
   }
 
-  return { token, user, verifyNotice, loggedIn, classroom, fetchUser, login, register, resendVerification, updateProfile, changePassword, logout }
+  return { token, user, verifyNotice, loggedIn, classroom, fetchUser, login, loginWithGuestOrder, register, resendVerification, updateProfile, changePassword, logout }
 }

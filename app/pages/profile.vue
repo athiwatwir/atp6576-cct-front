@@ -1,6 +1,6 @@
 <template>
   <div class="space-y-6">
-    <p v-if="!user" class="text-sm text-slate-500">กำลังโหลดโปรไฟล์...</p>
+    <PageLoading v-if="!user" message="กำลังโหลดโปรไฟล์..." />
 
     <template v-else>
       <section class="flex flex-col gap-4 rounded-[2rem] bg-gradient-to-r from-sky-100 to-blue-50 p-6 sm:flex-row sm:items-center">

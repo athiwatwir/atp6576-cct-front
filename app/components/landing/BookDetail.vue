@@ -1,7 +1,7 @@
 <template>
   <article class="mx-auto max-w-4xl px-4 py-8 md:px-6">
     <NuxtLink to="/books" class="text-sm font-bold text-blue-700">กลับไปหน้าหนังสือ</NuxtLink>
-    <p v-if="pending" class="mt-6 text-sm text-slate-500">กำลังโหลด...</p>
+    <PageLoading v-if="pending" />
     <p v-else-if="failed || !book" class="mt-6 rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">ไม่พบหนังสือเล่มนี้</p>
     <div v-else class="mt-4 grid gap-6 md:grid-cols-[1.05fr_0.95fr]">
       <div class="overflow-hidden rounded-3xl bg-sky-50">
@@ -68,10 +68,10 @@ const stockLabel = computed(() => {
 
 const buttonLabel = computed(() => {
   const book = props.book
-  if (!book) return 'ใส่ตะกร้า'
+  if (!book) return 'เลือกรายการนี้'
   if (!book.in_stock || (book.stock !== null && book.stock <= 0)) return 'สินค้าหมด'
-  if (quantityOf('book', book.id) > 0 && !canAdd(book)) return 'ในตะกร้าแล้ว'
-  if (quantityOf('book', book.id) > 0) return 'เพิ่มในตะกร้า'
-  return 'ใส่ตะกร้า'
+  if (quantityOf('book', book.id) > 0 && !canAdd(book)) return 'เลือกครบจำนวนแล้ว'
+  if (quantityOf('book', book.id) > 0) return 'เลือกเพิ่มอีกเล่ม'
+  return 'เลือกรายการนี้'
 })
 </script>

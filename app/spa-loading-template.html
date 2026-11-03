@@ -1,0 +1,51 @@
+<div class="cct-boot" role="status" aria-live="polite">
+  <div class="cct-boot__card">
+    <img src="/images/logo/logo.webp" alt="ClickClass Tutor" width="1099" height="404" class="cct-boot__logo">
+    <span class="cct-boot__spinner" aria-hidden="true"></span>
+    <p class="cct-boot__text">กำลังโหลด...</p>
+  </div>
+</div>
+<style>
+  .cct-boot {
+    position: fixed;
+    inset: 0;
+    z-index: 80;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f7fbff;
+    font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  .cct-boot__card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 32px 40px;
+    border-radius: 24px;
+    background: #fff;
+    box-shadow: 0 20px 25px -5px rgb(15 23 42 / 0.1), 0 0 0 1px #f1f5f9;
+  }
+  .cct-boot__logo {
+    height: 40px;
+    width: auto;
+  }
+  .cct-boot__spinner {
+    width: 48px;
+    height: 48px;
+    border-radius: 9999px;
+    border: 4px solid #dbeafe;
+    border-top-color: #2563eb;
+    border-right-color: #fb923c;
+    animation: cct-boot-spin 0.9s linear infinite;
+  }
+  .cct-boot__text {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: #334155;
+  }
+  @keyframes cct-boot-spin {
+    to { transform: rotate(360deg); }
+  }
+</style>

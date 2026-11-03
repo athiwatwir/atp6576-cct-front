@@ -5,7 +5,6 @@ export interface GuestOrderNotice {
   orderId: number
   email: string
   accountCreated: boolean
-  emailSent: boolean
 }
 
 function readTokens(): Record<string, string> {

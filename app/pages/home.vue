@@ -7,7 +7,7 @@
       <p class="mt-2 max-w-xl text-sm text-slate-600">รายการคอร์ส หลักสูตร และข้อสอบที่เปิดสิทธิ์ให้เรียนได้ทั้งหมด</p>
     </section>
 
-    <p v-if="!user" class="text-sm text-slate-500">กำลังโหลดห้องเรียน...</p>
+    <PageLoading v-if="!user" message="กำลังโหลดห้องเรียน..." />
 
     <section v-else-if="!classroom.items.length" class="rounded-3xl bg-white p-6 text-center shadow-sm ring-1 ring-slate-100">
       <p class="font-extrabold text-slate-900">ยังไม่มีสิทธิ์เรียน</p>

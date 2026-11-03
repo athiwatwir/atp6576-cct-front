@@ -1,7 +1,7 @@
 <template>
   <div class="mx-auto max-w-6xl px-4 py-8 md:px-6">
     <NuxtLink to="/#articles" class="text-sm font-bold text-blue-700">กลับหน้าแรก</NuxtLink>
-    <p v-if="pending" class="mt-6 text-sm text-slate-500">กำลังโหลด...</p>
+    <PageLoading v-if="pending" message="กำลังโหลดบทความ..." />
     <p v-else-if="failed || !article" class="mt-6 rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">ไม่พบบทความนี้</p>
 
     <div v-else class="mt-4 grid gap-8 md:grid-cols-[minmax(0,1fr)_16rem] lg:grid-cols-[minmax(0,1fr)_20rem]">

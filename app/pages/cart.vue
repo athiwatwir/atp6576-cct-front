@@ -1,9 +1,9 @@
 <template>
   <section class="mx-auto max-w-3xl px-4 py-10 md:px-6">
-    <h1 class="text-3xl font-extrabold text-slate-900">ตะกร้าสินค้า</h1>
+    <h1 class="text-3xl font-extrabold text-slate-900">รายการที่เลือก</h1>
 
     <p v-if="items.length === 0" class="mt-6 rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">
-      ยังไม่มีสินค้าในตะกร้า
+      ยังไม่มีรายการที่เลือก
       <NuxtLink to="/books" class="ms-1 font-bold text-blue-700">เลือกสินค้า</NuxtLink>
     </p>
 
@@ -84,7 +84,7 @@ import { planDurationLabel, selectedPlan } from '@/composables/useCart'
 
 definePageMeta({ layout: 'landing' })
 
-useHead({ title: 'ตะกร้าสินค้า | ClickClass Tutor' })
+useHead({ title: 'รายการที่เลือก | ClickClass Tutor' })
 
 const { loggedIn } = useAuth()
 const { api } = useApi()
