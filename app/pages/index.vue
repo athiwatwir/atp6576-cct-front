@@ -25,11 +25,19 @@
           </NuxtLink>
         </div>
       </div>
-      <div class="rounded-[2rem] bg-gradient-to-br from-sky-100 via-white to-blue-100 p-8 text-center shadow-sm">
-        <p class="text-6xl" aria-hidden="true">📚</p>
+      <NuxtLink
+        :to="loggedIn ? '/home' : { path: '/signin', query: { redirect: '/home' } }"
+        class="group block rounded-[2rem] bg-gradient-to-br from-sky-100 via-white to-blue-100 p-8 text-center shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-lg hover:ring-blue-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300"
+      >
+        <p class="text-6xl transition group-hover:scale-110" aria-hidden="true">📚</p>
         <p class="mt-3 text-lg font-bold text-blue-800">เข้าห้องเรียน</p>
-        <p class="mt-1 text-sm text-slate-500">เข้าห้องเรียนได้หลังเข้าสู่ระบบ</p>
-      </div>
+        <p class="mt-1 text-sm text-slate-500">{{ loggedIn ? 'เรียนต่อจากที่ค้างไว้ได้เลย' : 'เข้าห้องเรียนได้หลังเข้าสู่ระบบ' }}</p>
+        <span class="mt-4 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-200 transition group-hover:bg-blue-700">
+          <LearnIcon :name="loggedIn ? 'classroom' : 'login'" class="h-4 w-4" />
+          {{ loggedIn ? 'ไปที่ห้องเรียน' : 'เข้าสู่ระบบเพื่อเข้าเรียน' }}
+          <LearnIcon name="arrow" class="h-4 w-4 transition group-hover:translate-x-0.5" />
+        </span>
+      </NuxtLink>
     </section>
 
     <section id="subjects" class="mx-auto grid max-w-6xl grid-cols-2 gap-3 px-4 sm:grid-cols-4 md:px-6">
@@ -91,6 +99,8 @@
 import type { HomeBanner } from '@/components/landing/HomeBannerSlider.vue'
 import type { HomeReview } from '@/components/landing/HomeReviewSlider.vue'
 import type { CatalogItem, StoreBook } from '@/composables/useCart'
+
+const { loggedIn } = useAuth()
 
 interface ArticleSummary {
   id: number
