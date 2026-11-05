@@ -17,13 +17,18 @@
       </NuxtLink>
     </div>
 
+    <slot name="toolbar" />
+
     <div v-if="pending" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div v-for="index in 4" :key="index" class="h-72 animate-pulse rounded-3xl bg-white ring-1 ring-slate-100" />
     </div>
     <p v-else-if="failed" class="rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">
       โหลดรายการไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง</p>
-    <p v-else-if="items.length === 0" class="rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">
-      ยังไม่มีรายการที่เปิดขาย</p>
+    <template v-else-if="items.length === 0">
+      <slot name="empty">
+        <p class="rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">ยังไม่มีรายการที่เปิดขาย</p>
+      </slot>
+    </template>
 
     <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <article v-for="item in items" :key="`${item.item_type}-${item.id}`"

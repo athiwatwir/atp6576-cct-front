@@ -1,5 +1,6 @@
 <template>
   <section class="mx-auto grid max-w-5xl gap-6 px-4 py-10 md:px-6 lg:grid-cols-[1.2fr_0.8fr]">
+    <CheckoutSteps :current="2" class="lg:col-span-2" />
     <div>
       <h1 class="text-3xl font-extrabold text-slate-900">ยืนยันคำสั่งซื้อ</h1>
       <p class="mt-2 text-sm text-slate-500">{{ quote?.requires_shipping ? 'รายการนี้ต้องระบุที่อยู่จัดส่ง' : 'ตรวจยอดก่อนยืนยันคำสั่งซื้อ' }}</p>

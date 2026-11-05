@@ -38,6 +38,13 @@ export interface CourseVideo {
   is_trial: boolean
   video_url: string | null
   progress?: VideoWatchProgress
+  my_rating?: VideoRating | null
+}
+
+export interface VideoRating {
+  rating: number
+  comment: string | null
+  updated_at: string | null
 }
 
 export interface CourseDocument {

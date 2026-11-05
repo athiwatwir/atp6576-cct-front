@@ -3,15 +3,43 @@
     <PageLoading v-if="!user" message="กำลังโหลดโปรไฟล์..." />
 
     <template v-else>
-      <section class="flex flex-col gap-4 rounded-[2rem] bg-gradient-to-r from-sky-100 to-blue-50 p-6 sm:flex-row sm:items-center">
-        <span class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white text-2xl font-extrabold text-blue-700 shadow-sm">
-          <img v-if="previewUrl || user.avatar_url" :src="previewUrl || user.avatar_url || ''" alt="" class="h-full w-full object-cover">
-          <span v-else>{{ initial }}</span>
-        </span>
+      <section
+        class="flex flex-col gap-4 rounded-[2rem] bg-gradient-to-r from-sky-100 to-blue-50 p-6 sm:flex-row sm:items-center">
+        <div class="shrink-0">
+          <button
+            type="button"
+            class="group relative block h-24 w-24 rounded-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 disabled:cursor-wait"
+            :disabled="avatarPending"
+            aria-label="เปลี่ยนรูปโปรไฟล์"
+            @click="avatarInput?.click()"
+          >
+            <span class="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white text-3xl font-extrabold text-blue-700 shadow-md ring-4 ring-white">
+              <img v-if="previewUrl || user.avatar_url" :src="previewUrl || user.avatar_url || ''" alt=""
+                class="h-full w-full object-cover">
+              <span v-else>{{ initial }}</span>
+            </span>
+            <span class="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-slate-900/50 text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+              :class="{ 'opacity-100': avatarPending }" aria-hidden="true">
+              <span v-if="avatarPending" class="h-7 w-7 animate-spin rounded-full border-[3px] border-white/40 border-t-white" />
+              <template v-else>
+                <LearnIcon name="camera" class="h-6 w-6" />
+                <span class="mt-0.5 text-[11px] font-bold">เปลี่ยนรูป</span>
+              </template>
+            </span>
+            <span class="absolute -bottom-0.5 -end-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow-md ring-2 ring-white transition group-hover:bg-blue-700" aria-hidden="true">
+              <LearnIcon name="camera" class="h-4 w-4" />
+            </span>
+          </button>
+          <input ref="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onAvatar">
+        </div>
         <div>
           <h1 class="text-3xl font-extrabold text-slate-900">{{ user.name }}</h1>
-          <p class="mt-1 text-sm text-slate-600">{{ user.school_name || 'ยังไม่ได้ระบุโรงเรียน' }}</p>
-          <p v-if="user.status_label" class="mt-2 inline-flex rounded-full bg-white px-3 py-1 text-xs font-bold text-blue-700">{{ user.status_label }}</p>
+          <p class="mt-1 text-sm text-slate-600">โรงเรียน: {{ user.school_name || 'ยังไม่ได้ระบุโรงเรียน' }}</p>
+          <p v-if="avatarMessage" class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold" :class="avatarError ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'">
+            {{ avatarMessage }}
+          </p>
+          <p v-else class="mt-2 text-xs text-slate-500">แตะที่รูปเพื่อเปลี่ยนรูปโปรไฟล์ (jpg, png หรือ webp ไม่เกิน 4 MB)</p>
+
           <NuxtLink to="/orders" class="mt-3 inline-flex text-sm font-bold text-blue-700">ประวัติการสั่งซื้อ</NuxtLink>
         </div>
       </section>
@@ -19,62 +47,62 @@
       <form class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 md:p-6" @submit.prevent="saveProfile">
         <h2 class="text-xl font-extrabold text-slate-900">แก้ไขโปรไฟล์</h2>
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
-          <label class="block text-sm font-semibold text-slate-700 sm:col-span-2">
-            รูปโปรไฟล์
-            <input type="file" accept="image/jpeg,image/png,image/webp" class="mt-1 block w-full text-sm font-normal" @change="onAvatar">
-            <span class="mt-1 block text-xs font-normal text-slate-400">jpg, png หรือ webp ไม่เกิน 4 MB</span>
-          </label>
           <label class="block text-sm font-semibold text-slate-700">
             ชื่อ-นามสกุล
-            <input v-model="form.name" required maxlength="150" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.name" required maxlength="150"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             อีเมล
-            <input v-model="form.email" type="email" required class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.email" type="email" required
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             เบอร์โทร
-            <input v-model="form.phone" type="tel" maxlength="30" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.phone" type="tel" maxlength="30"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
-          <label class="block scroll-mt-32 text-sm font-semibold text-slate-700" :class="highlightSchool ? 'rounded-2xl bg-amber-50 p-3 ring-2 ring-amber-300' : ''">
+          <label class="block scroll-mt-32 text-sm font-semibold text-slate-700"
+            :class="highlightSchool ? 'rounded-2xl bg-amber-50 p-3 ring-2 ring-amber-300' : ''">
             โรงเรียน
-            <input
-              ref="schoolEl"
-              v-model="form.school_name"
-              maxlength="255"
-              placeholder="เช่น โรงเรียนอนุบาลเชียงใหม่"
-              class="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
-            >
-            <span v-if="highlightSchool" class="mt-1 block text-xs font-normal text-amber-700">กรอกชื่อโรงเรียน แล้วกด "บันทึกโปรไฟล์" ด้านล่าง</span>
+            <input ref="schoolEl" v-model="form.school_name" maxlength="255" placeholder="เช่น โรงเรียนอนุบาลเชียงใหม่"
+              class="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <span v-if="highlightSchool" class="mt-1 block text-xs font-normal text-amber-700">กรอกชื่อโรงเรียน แล้วกด
+              "บันทึกโปรไฟล์" ด้านล่าง</span>
           </label>
           <label class="block text-sm font-semibold text-slate-700 sm:col-span-2">
             ที่อยู่
-            <input v-model="form.address_line1" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.address_line1"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             ตำบล/แขวง
-            <input v-model="form.subdistrict" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.subdistrict"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             อำเภอ/เขต
-            <input v-model="form.district" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.district"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             จังหวัด
-            <input v-model="form.province" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.province"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             รหัสไปรษณีย์
-            <input v-model="form.postal_code" inputmode="numeric" maxlength="5" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.postal_code" inputmode="numeric" maxlength="5"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
         </div>
-        <p v-if="profileError" class="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ profileError }}</p>
-        <p v-if="profileSuccess" class="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ profileSuccess }}</p>
-        <button
-          type="submit"
+        <p v-if="profileError" class="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ profileError }}
+        </p>
+        <p v-if="profileSuccess" class="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{
+          profileSuccess }}</p>
+        <button type="submit"
           class="mt-5 rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600 disabled:bg-slate-300"
-          :disabled="profilePending"
-        >
+          :disabled="profilePending">
           {{ profilePending ? 'กำลังบันทึก...' : 'บันทึกโปรไฟล์' }}
         </button>
       </form>
@@ -87,16 +115,21 @@
             <p v-if="!classroom.courses.length" class="mt-2 text-sm text-slate-400">ยังไม่มีคอร์สที่เปิดสิทธิ์</p>
             <ul v-else class="mt-2 space-y-2">
               <li v-for="item in classroom.courses" :key="item.id">
-                <NuxtLink :to="item.to" class="block rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold hover:bg-blue-50">{{ item.name }}</NuxtLink>
+                <NuxtLink :to="item.to"
+                  class="block rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold hover:bg-blue-50">{{ item.name }}
+                </NuxtLink>
               </li>
             </ul>
           </div>
           <div>
             <h3 class="text-sm font-bold text-slate-500">หลักสูตร</h3>
-            <p v-if="!classroom.curriculums.length" class="mt-2 text-sm text-slate-400">ยังไม่มีหลักสูตรที่เปิดสิทธิ์</p>
+            <p v-if="!classroom.curriculums.length" class="mt-2 text-sm text-slate-400">ยังไม่มีหลักสูตรที่เปิดสิทธิ์
+            </p>
             <ul v-else class="mt-2 space-y-2">
               <li v-for="item in classroom.curriculums" :key="item.id">
-                <NuxtLink :to="item.to" class="block rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold hover:bg-blue-50">{{ item.name }}</NuxtLink>
+                <NuxtLink :to="item.to"
+                  class="block rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold hover:bg-blue-50">{{ item.name }}
+                </NuxtLink>
               </li>
             </ul>
           </div>
@@ -105,7 +138,9 @@
             <p v-if="!classroom.exams.length" class="mt-2 text-sm text-slate-400">ยังไม่มีข้อสอบที่เปิดสิทธิ์</p>
             <ul v-else class="mt-2 space-y-2">
               <li v-for="item in classroom.exams" :key="item.id">
-                <NuxtLink :to="item.to" class="block rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold hover:bg-blue-50">{{ item.name }}</NuxtLink>
+                <NuxtLink :to="item.to"
+                  class="block rounded-2xl bg-slate-50 px-4 py-3 text-sm font-semibold hover:bg-blue-50">{{ item.name }}
+                </NuxtLink>
               </li>
             </ul>
           </div>
@@ -117,24 +152,27 @@
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
           <label class="block text-sm font-semibold text-slate-700 sm:col-span-2">
             รหัสผ่านปัจจุบัน
-            <input v-model="passwordForm.current" type="password" required autocomplete="current-password" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="passwordForm.current" type="password" required autocomplete="current-password"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             รหัสผ่านใหม่
-            <input v-model="passwordForm.next" type="password" required minlength="8" autocomplete="new-password" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="passwordForm.next" type="password" required minlength="8" autocomplete="new-password"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             ยืนยันรหัสผ่านใหม่
-            <input v-model="passwordForm.confirm" type="password" required minlength="8" autocomplete="new-password" class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="passwordForm.confirm" type="password" required minlength="8" autocomplete="new-password"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
         </div>
-        <p v-if="passwordError" class="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ passwordError }}</p>
-        <p v-if="passwordSuccess" class="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{ passwordSuccess }}</p>
-        <button
-          type="submit"
+        <p v-if="passwordError" class="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ passwordError }}
+        </p>
+        <p v-if="passwordSuccess" class="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{{
+          passwordSuccess }}</p>
+        <button type="submit"
           class="mt-5 rounded-full bg-blue-600 px-5 py-3 text-sm font-bold text-white hover:bg-blue-700 disabled:bg-slate-300"
-          :disabled="passwordPending"
-        >
+          :disabled="passwordPending">
           {{ passwordPending ? 'กำลังเปลี่ยนรหัสผ่าน...' : 'เปลี่ยนรหัสผ่าน' }}
         </button>
       </form>
@@ -158,7 +196,10 @@ const form = reactive({
   province: '',
   postal_code: '',
 })
-const avatar = ref<File | null>(null)
+const avatarInput = ref<HTMLInputElement | null>(null)
+const avatarPending = ref(false)
+const avatarMessage = ref('')
+const avatarError = ref(false)
 const previewUrl = ref('')
 const filled = ref(false)
 const profilePending = ref(false)
@@ -195,12 +236,61 @@ watch(user, (value) => {
   filled.value = true
 }, { immediate: true })
 
-function onAvatar(event: Event) {
-  const file = (event.target as HTMLInputElement).files?.[0] ?? null
-  avatar.value = file
+function clearPreview() {
   if (previewUrl.value) URL.revokeObjectURL(previewUrl.value)
-  previewUrl.value = file ? URL.createObjectURL(file) : ''
+  previewUrl.value = ''
 }
+
+async function onAvatar(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] ?? null
+  input.value = ''
+  const current = user.value
+  if (!file || !current) return
+
+  avatarMessage.value = ''
+  avatarError.value = false
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+    avatarError.value = true
+    avatarMessage.value = 'ใช้ได้เฉพาะไฟล์ jpg, png หรือ webp'
+    return
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    avatarError.value = true
+    avatarMessage.value = 'รูปโปรไฟล์ต้องไม่เกิน 4 MB'
+    return
+  }
+
+  clearPreview()
+  previewUrl.value = URL.createObjectURL(file)
+  avatarPending.value = true
+  try {
+    await updateProfile({
+      name: current.name,
+      email: current.email,
+      phone: current.phone ?? null,
+      school_name: current.school_name ?? null,
+      address_line1: current.address?.address_line1 ?? null,
+      subdistrict: current.address?.subdistrict ?? null,
+      district: current.address?.district ?? null,
+      province: current.address?.province ?? null,
+      postal_code: current.address?.postal_code ?? null,
+      avatar: file,
+    })
+    clearPreview()
+    avatarMessage.value = 'เปลี่ยนรูปโปรไฟล์แล้ว'
+  }
+  catch (error: unknown) {
+    clearPreview()
+    avatarError.value = true
+    avatarMessage.value = apiErrorMessage(error, 'เปลี่ยนรูปโปรไฟล์ไม่สำเร็จ')
+  }
+  finally {
+    avatarPending.value = false
+  }
+}
+
+onBeforeUnmount(clearPreview)
 
 async function saveProfile() {
   profileError.value = ''
@@ -209,11 +299,6 @@ async function saveProfile() {
     profileError.value = 'รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก'
     return
   }
-  if (avatar.value && avatar.value.size > 4 * 1024 * 1024) {
-    profileError.value = 'รูปโปรไฟล์ต้องไม่เกิน 4 MB'
-    return
-  }
-
   profilePending.value = true
   try {
     await updateProfile({
@@ -226,9 +311,7 @@ async function saveProfile() {
       district: form.district.trim() || null,
       province: form.province.trim() || null,
       postal_code: form.postal_code.trim() || null,
-      avatar: avatar.value,
     })
-    avatar.value = null
     profileSuccess.value = 'บันทึกโปรไฟล์แล้ว'
   }
   catch (error: unknown) {

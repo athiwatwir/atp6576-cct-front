@@ -1,5 +1,6 @@
 <template>
   <section class="mx-auto max-w-3xl px-4 py-10 md:px-6">
+    <CheckoutSteps :current="1" class="mb-6" />
     <h1 class="text-3xl font-extrabold text-slate-900">รายการที่เลือก</h1>
 
     <p v-if="items.length === 0" class="mt-6 rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">

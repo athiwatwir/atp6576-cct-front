@@ -136,7 +136,7 @@
                 :class="isFullscreen ? 'h-full' : 'aspect-video max-h-[70vh]'"
                 @contextmenu.prevent
                 @loadedmetadata="onLoaded"
-                @timeupdate="onTimeUpdate"
+                @timeupdate="onPlayerTime"
                 @pause="flushProgress(false)"
                 @ended="onEnded"
                 @error="onVideoError"
@@ -225,6 +225,15 @@
                 <LearnIcon name="arrow" class="h-4 w-4" />
               </button>
             </div>
+
+            <VideoRatingCard
+              v-if="activeVideo && showRating"
+              :key="`rating-${activeVideo.id}`"
+              class="mt-4"
+              :course-slug="course.slug"
+              :video="activeVideo"
+              @saved="activeVideo.my_rating = $event"
+            />
 
             <section v-if="lessonDescription" class="mt-4 rounded-3xl bg-white p-4 shadow-sm ring-1 ring-slate-100 md:p-5">
               <h3 class="text-sm font-extrabold text-slate-900">เกี่ยวกับบทเรียนนี้</h3>
@@ -442,6 +451,26 @@ const stepIndex = computed(() => steps.value.findIndex(step => (activeVideo.valu
 const previousStep = computed(() => (stepIndex.value > 0 ? steps.value[stepIndex.value - 1] ?? null : null))
 const nextStep = computed(() => (stepIndex.value >= 0 ? steps.value[stepIndex.value + 1] ?? null : null))
 const courseDone = computed(() => lessons.value.length > 0 && completedCount.value === lessons.value.length)
+const RATING_UNLOCK_RATIO = 0.2
+const ratingUnlocked = reactive(new Set<number>())
+
+const showRating = computed(() => {
+  const video = activeVideo.value
+  if (!video) return false
+  const progress = watchOf(video)
+  return Boolean(video.my_rating)
+    || justFinished.value
+    || progress.status === 'completed'
+    || progress.progress_percent >= RATING_UNLOCK_RATIO * 100
+    || ratingUnlocked.has(video.id)
+})
+
+function onPlayerTime(event: Event) {
+  onTimeUpdate(event)
+  const player = event.target as HTMLVideoElement
+  const video = activeVideo.value
+  if (video && player.duration && player.currentTime / player.duration >= RATING_UNLOCK_RATIO) ratingUnlocked.add(video.id)
+}
 const lessonDescription = computed(() => activeVideo.value?.description || activeChapter.value?.description || '')
 const descriptionOpen = ref(false)
 

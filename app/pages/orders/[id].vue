@@ -8,6 +8,14 @@
       <h1 class="mt-2 text-3xl font-extrabold text-slate-900">คำสั่งซื้อ {{ order.order_no }}</h1>
       <p class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold" :class="statusClass">{{ order.payment_status_label }}</p>
 
+      <CheckoutSteps
+        v-if="order.payment_status !== 'refunded'"
+        class="mt-6"
+        :current="3"
+        :complete="order.payment_status === 'paid'"
+        :pay-detail="order.payment_status === 'awaiting_verification' ? 'ส่งสลิปแล้ว รอตรวจสอบ' : ''"
+      />
+
       <div v-if="notice && order.payment_status !== 'paid'" class="mt-6 rounded-3xl bg-blue-50 p-5 text-sm text-slate-700">
         <p class="font-bold text-slate-900">{{ notice.accountCreated ? 'สร้างบัญชีให้แล้ว' : 'เพิ่มคำสั่งซื้อในบัญชีเดิมแล้ว' }}</p>
         <p v-if="notice.accountCreated" class="mt-1">

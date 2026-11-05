@@ -57,7 +57,13 @@
         <div v-if="exam.attempts.length" class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100">
           <div class="flex items-center justify-between gap-3">
             <h2 class="font-extrabold text-slate-900">ประวัติการทำข้อสอบ</h2>
-            <span v-if="exam.best_percentage !== null" class="text-sm font-bold text-emerald-600">ดีที่สุด {{ formatPercent(exam.best_percentage) }}</span>
+            <span class="flex items-center gap-2">
+              <span v-if="exam.best_percentage !== null" class="text-sm font-bold text-emerald-600">ดีที่สุด {{ formatPercent(exam.best_percentage) }}</span>
+              <button type="button" class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-bold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-100" @click="openLeaderboard">
+                <LearnIcon name="trophy" class="h-3.5 w-3.5" />
+                อันดับ Top {{ TOP_COUNT }}
+              </button>
+            </span>
           </div>
           <ul class="mt-3 divide-y divide-slate-100">
             <li v-for="attempt in exam.attempts" :key="attempt.id" class="flex flex-wrap items-center justify-between gap-3 py-3">
@@ -141,17 +147,49 @@
 
       <!-- ผลสอบ -->
       <section v-else-if="screen === 'result' && result" class="space-y-4">
-        <div class="rounded-3xl p-6 text-center shadow-sm ring-1" :class="result.passed === false ? 'bg-rose-50 ring-rose-100' : 'bg-emerald-50 ring-emerald-100'">
-          <p class="text-4xl" aria-hidden="true">{{ result.status === 'expired' ? '⏰' : result.passed === false ? '💪' : result.passed === true ? '🎉' : '📝' }}</p>
-          <p class="mt-2 text-sm font-bold" :class="result.passed === false ? 'text-rose-600' : 'text-emerald-600'">
-            {{ result.status === 'expired' ? 'หมดเวลา' : result.passed === true ? 'สอบผ่าน' : result.passed === false ? 'ยังไม่ผ่าน ลองอีกครั้งนะ' : 'ส่งคำตอบแล้ว' }}
+        <div class="relative overflow-hidden rounded-3xl p-6 text-center shadow-sm ring-1 md:p-8" :class="resultTheme.box">
+          <span class="pointer-events-none absolute -end-10 -top-10 h-40 w-40 rounded-full blur-2xl" :class="resultTheme.glow" aria-hidden="true" />
+
+          <span class="relative mx-auto flex h-24 w-24 items-center justify-center rounded-full shadow-lg ring-8" :class="resultTheme.badge">
+            <LearnIcon :name="result.status === 'expired' ? 'clock' : 'trophy'" class="h-12 w-12" />
+          </span>
+          <p class="relative mt-4 text-base font-extrabold" :class="resultTheme.text">{{ resultHeadline }}</p>
+
+          <p class="relative mt-3 text-sm font-bold text-slate-500">คะแนนที่ได้</p>
+          <p class="relative mt-1 flex items-baseline justify-center gap-2 font-extrabold text-slate-900">
+            <span class="text-6xl leading-none md:text-7xl" :class="resultTheme.score">{{ formatScore(result.score) }}</span>
+            <span class="text-2xl text-slate-400">/</span>
+            <span class="text-3xl text-slate-500">{{ formatScore(result.max_score) }}</span>
+            <span class="text-base font-bold text-slate-500">คะแนน</span>
           </p>
-          <p class="mt-1 text-5xl font-extrabold text-slate-900">{{ formatPercent(result.percentage) }}</p>
-          <p class="mt-2 text-sm text-slate-600">
-            ได้ {{ formatScore(result.score) }} จาก {{ formatScore(result.max_score) }} คะแนน · ตอบถูก {{ result.correct_count }}/{{ result.question_count }} ข้อ
-            <template v-if="result.passing_score !== null"> · เกณฑ์ผ่าน {{ result.passing_score }}%</template>
-          </p>
-          <div class="mt-5 flex flex-wrap justify-center gap-2">
+
+          <div class="relative mx-auto mt-4 h-3 max-w-xs overflow-hidden rounded-full bg-white/80 ring-1 ring-slate-100">
+            <span class="block h-full rounded-full transition-all duration-700" :class="resultTheme.bar" :style="{ width: `${Math.min(100, result.percentage)}%` }" />
+          </div>
+
+          <div class="relative mt-4 flex flex-wrap justify-center gap-2 text-xs font-bold">
+            <span class="rounded-full bg-white px-3 py-1.5 text-slate-700 ring-1 ring-slate-100">{{ formatPercent(result.percentage) }}</span>
+            <span class="rounded-full bg-white px-3 py-1.5 text-slate-700 ring-1 ring-slate-100">ตอบถูก {{ result.correct_count }}/{{ result.question_count }} ข้อ</span>
+            <span v-if="result.passing_score !== null" class="rounded-full bg-white px-3 py-1.5 text-slate-700 ring-1 ring-slate-100">เกณฑ์ผ่าน {{ result.passing_score }}%</span>
+          </div>
+
+          <div v-if="result.ranking" class="relative mx-auto mt-5 flex max-w-sm items-center gap-3 rounded-2xl bg-white/90 p-3 text-start shadow-sm ring-1 ring-amber-100">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl text-2xl" :class="rankBadge(result.ranking.rank).box" aria-hidden="true">
+              {{ rankBadge(result.ranking.rank).emoji }}
+            </span>
+            <span class="min-w-0 flex-1">
+              <span class="block text-xs font-bold text-slate-500">อันดับครั้งนี้</span>
+              <span class="block text-lg font-extrabold text-slate-900">
+                ที่ {{ result.ranking.rank.toLocaleString('th-TH') }}
+                <span class="text-sm font-bold text-slate-500">จาก {{ result.ranking.total_students.toLocaleString('th-TH') }} คน</span>
+              </span>
+            </span>
+            <button type="button" class="shrink-0 rounded-full bg-amber-500 px-3 py-2 text-xs font-bold text-white shadow-sm shadow-amber-200 hover:bg-amber-600" @click="openLeaderboard">
+              ดู Top {{ TOP_COUNT }}
+            </button>
+          </div>
+
+          <div class="relative mt-6 flex flex-wrap justify-center gap-2">
             <button type="button" class="rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50" @click="backToIntro">กลับหน้าข้อสอบ</button>
             <button type="button" class="rounded-full bg-blue-600 px-4 py-2 text-sm font-bold text-white hover:bg-blue-700" @click="emit('exit')">{{ exitLabel }}</button>
           </div>
@@ -188,6 +226,58 @@
         </div>
       </section>
     </template>
+
+    <div v-if="leaderboardOpen" class="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-4" @click.self="leaderboardOpen = false">
+      <div role="dialog" aria-modal="true" aria-labelledby="leaderboard-title" class="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
+        <header class="relative shrink-0 bg-gradient-to-br from-amber-400 to-orange-500 px-5 pb-5 pt-4 text-white">
+          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 hover:bg-white/30" aria-label="ปิด" @click="leaderboardOpen = false">
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          </button>
+          <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/20"><LearnIcon name="trophy" class="h-7 w-7" /></span>
+          <h2 id="leaderboard-title" class="mt-2 text-xl font-extrabold">อันดับคะแนน Top {{ TOP_COUNT }}</h2>
+          <p class="text-sm text-white/90">{{ exam?.name }}<template v-if="leaderboard"> · ผู้เข้าสอบ {{ leaderboard.total_students.toLocaleString('th-TH') }} คน</template></p>
+        </header>
+
+        <div class="min-h-0 flex-1 overflow-y-auto p-3">
+          <div v-if="leaderboardPending" class="flex flex-col items-center gap-3 py-12 text-sm font-semibold text-slate-500">
+            <span class="h-10 w-10 animate-spin rounded-full border-4 border-amber-100 border-t-amber-500" aria-hidden="true" />
+            กำลังโหลดอันดับ...
+          </div>
+          <p v-else-if="leaderboardError" class="m-2 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ leaderboardError }}</p>
+          <p v-else-if="!leaderboard?.top.length" class="py-12 text-center text-sm text-slate-500">ยังไม่มีผู้ส่งคำตอบ เป็นคนแรกเลยสิ!</p>
+          <ol v-else class="space-y-1.5">
+            <li
+              v-for="row in leaderboard.top"
+              :key="`${row.rank}-${row.name}-${row.submitted_at}`"
+              class="flex items-center gap-3 rounded-2xl px-3 py-2.5"
+              :class="row.is_me ? 'bg-blue-50 ring-2 ring-blue-300' : row.rank <= 3 ? 'bg-amber-50/70' : 'bg-slate-50'"
+            >
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-extrabold" :class="rankBadge(row.rank).box">
+                {{ row.rank <= 3 ? rankBadge(row.rank).emoji : row.rank }}
+              </span>
+              <span class="min-w-0 flex-1">
+                <span class="block truncate text-sm font-bold text-slate-800">{{ row.name }}<span v-if="row.is_me" class="ms-1.5 rounded-full bg-blue-600 px-1.5 py-0.5 text-[10px] text-white">คุณ</span></span>
+                <span v-if="row.school_name" class="block truncate text-xs text-slate-400">{{ row.school_name }}</span>
+              </span>
+              <span class="shrink-0 text-end">
+                <span class="block text-sm font-extrabold text-slate-900">{{ formatScore(row.score) }}/{{ formatScore(row.max_score) }}</span>
+                <span class="block text-xs font-semibold text-slate-400">{{ formatPercent(row.percentage) }}</span>
+              </span>
+            </li>
+          </ol>
+        </div>
+
+        <footer v-if="leaderboard?.me && !leaderboard.top.some(row => row.is_me)" class="shrink-0 border-t border-slate-100 bg-white p-3">
+          <p class="px-1 pb-1.5 text-xs font-bold text-slate-400">อันดับของคุณ</p>
+          <div class="flex items-center gap-3 rounded-2xl bg-blue-50 px-3 py-2.5 ring-2 ring-blue-300">
+            <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-sm font-extrabold text-white">{{ leaderboard.me.rank }}</span>
+            <span class="min-w-0 flex-1 truncate text-sm font-bold text-slate-800">{{ leaderboard.me.name }}</span>
+            <span class="shrink-0 text-sm font-extrabold text-slate-900">{{ formatScore(leaderboard.me.score) }}/{{ formatScore(leaderboard.me.max_score) }}</span>
+          </div>
+        </footer>
+        <p v-else-if="leaderboard && !leaderboard.me" class="shrink-0 border-t border-slate-100 bg-white px-4 py-3 text-center text-xs text-slate-500">ส่งคำตอบให้ครบเพื่อติดอันดับกับเพื่อนๆ</p>
+      </div>
+    </div>
 
     <div v-if="confirmOpen" class="fixed inset-0 z-[60] flex items-center justify-center bg-slate-900/50 p-4" @click.self="confirmOpen = false">
       <div role="dialog" aria-modal="true" aria-labelledby="submit-title" class="w-full max-w-sm rounded-3xl bg-white p-6 text-center shadow-xl">
@@ -265,8 +355,26 @@ interface ReviewQuestion extends ExamQuestion {
   points_awarded: number
 }
 
+interface LeaderboardRow {
+  rank: number
+  name: string
+  school_name: string | null
+  score: number
+  max_score: number
+  percentage: number
+  submitted_at: string | null
+  is_me: boolean
+}
+
+interface Leaderboard {
+  total_students: number
+  top: LeaderboardRow[]
+  me: LeaderboardRow | null
+}
+
 interface AttemptResult extends AttemptSummary {
   passing_score: number | null
+  ranking?: { rank: number, total_students: number } | null
   correct_count: number
   question_count: number
   review: ReviewQuestion[]
@@ -311,6 +419,55 @@ const secondsLeft = computed(() => {
 })
 
 const storageKey = (attemptId: number) => `cct-exam-answers-${attemptId}`
+
+const TOP_COUNT = 50
+const leaderboardOpen = ref(false)
+const leaderboardPending = ref(false)
+const leaderboardError = ref('')
+const leaderboard = ref<Leaderboard | null>(null)
+
+async function openLeaderboard() {
+  leaderboardOpen.value = true
+  leaderboardPending.value = true
+  leaderboardError.value = ''
+  try {
+    leaderboard.value = (await api<{ data: Leaderboard }>(`/learning/exams/${props.slug}/leaderboard`)).data
+  }
+  catch (error: unknown) {
+    leaderboardError.value = apiErrorMessage(error, 'โหลดอันดับไม่สำเร็จ ลองใหม่อีกครั้ง')
+  }
+  finally {
+    leaderboardPending.value = false
+  }
+}
+
+function rankBadge(rank: number) {
+  if (rank === 1) return { emoji: '🥇', box: 'bg-amber-100 text-amber-700' }
+  if (rank === 2) return { emoji: '🥈', box: 'bg-slate-200 text-slate-700' }
+  if (rank === 3) return { emoji: '🥉', box: 'bg-orange-100 text-orange-700' }
+  if (rank <= 10) return { emoji: '🏅', box: 'bg-sky-100 text-sky-700' }
+  return { emoji: '⭐', box: 'bg-white text-slate-600 ring-1 ring-slate-200' }
+}
+
+const resultHeadline = computed(() => {
+  const value = result.value
+  if (!value) return ''
+  if (value.status === 'expired') return 'หมดเวลาแล้ว ครั้งหน้าลองใหม่นะ'
+  if (value.passed === true) return 'เยี่ยมมาก! สอบผ่านแล้ว'
+  if (value.passed === false) return 'ยังไม่ผ่าน ลองอีกครั้ง เก่งขึ้นแน่นอน'
+  return value.percentage >= 80 ? 'เก่งมาก! ทำได้ดีเยี่ยม' : value.percentage >= 50 ? 'ทำได้ดี! ฝึกต่ออีกนิด' : 'ส่งคำตอบแล้ว ลองดูเฉลยด้านล่างนะ'
+})
+
+const resultTheme = computed(() => {
+  const value = result.value
+  if (value?.status === 'expired') {
+    return { box: 'bg-slate-50 ring-slate-200', glow: 'bg-slate-200/60', badge: 'bg-slate-200 text-slate-500 ring-slate-100', text: 'text-slate-600', score: 'text-slate-700', bar: 'bg-slate-400' }
+  }
+  if (value?.passed === false) {
+    return { box: 'bg-gradient-to-br from-rose-50 to-white ring-rose-100', glow: 'bg-rose-200/50', badge: 'bg-gradient-to-br from-slate-200 to-slate-300 text-slate-500 ring-white', text: 'text-rose-600', score: 'text-rose-600', bar: 'bg-rose-400' }
+  }
+  return { box: 'bg-gradient-to-br from-amber-50 via-white to-emerald-50 ring-amber-100', glow: 'bg-amber-200/60', badge: 'bg-gradient-to-br from-amber-300 to-orange-400 text-white ring-amber-100', text: 'text-emerald-600', score: 'text-amber-500', bar: 'bg-gradient-to-r from-amber-400 to-emerald-500' }
+})
 
 function choiceLabel(index: number) {
   return ['ก', 'ข', 'ค', 'ง', 'จ', 'ฉ', 'ช', 'ซ'][index] ?? String(index + 1)
@@ -468,6 +625,8 @@ watch(() => props.slug, () => {
   attempt.value = null
   result.value = null
   confirmOpen.value = false
+  leaderboardOpen.value = false
+  leaderboard.value = null
   actionError.value = ''
   loadExam()
 }, { immediate: true })
