@@ -19,8 +19,8 @@
 
     <slot name="toolbar" />
 
-    <div v-if="pending" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div v-for="index in 4" :key="index" class="h-72 animate-pulse rounded-3xl bg-white ring-1 ring-slate-100" />
+    <div v-if="pending" class="grid gap-4 sm:grid-cols-2" :class="gridColumns">
+      <div v-for="index in columns" :key="index" class="h-72 animate-pulse rounded-3xl bg-white ring-1 ring-slate-100" />
     </div>
     <p v-else-if="failed" class="rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">
       โหลดรายการไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง</p>
@@ -30,7 +30,7 @@
       </slot>
     </template>
 
-    <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div v-else class="grid gap-4 sm:grid-cols-2" :class="gridColumns">
       <article v-for="item in items" :key="`${item.item_type}-${item.id}`"
         class="flex flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
         <NuxtLink :to="detailPath(item)" class="flex flex-1 flex-col">
@@ -109,10 +109,15 @@ const props = withDefaults(defineProps<{
   heading?: 'h1' | 'h2'
   icon?: 'home' | 'course' | 'exam' | 'book' | 'contact'
   chip?: string
+  /** จำนวนการ์ดต่อแถวบนจอใหญ่ */
+  columns?: 3 | 4
 }>(), {
   heading: 'h1',
   chip: 'bg-blue-100 text-blue-600',
+  columns: 4,
 })
+
+const gridColumns = computed(() => (props.columns === 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-4'))
 
 const { count, addCatalog, quantityOf, planOf } = useCart()
 

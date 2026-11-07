@@ -23,6 +23,7 @@ export interface ClassroomItem extends LearningItem {
 export interface StudentUser {
   id: number
   name: string
+  nickname?: string | null
   email: string
   phone?: string | null
   school_name?: string | null
@@ -40,6 +41,7 @@ export interface StudentUser {
 
 export interface ProfileInput {
   name: string
+  nickname?: string | null
   email: string
   phone?: string | null
   school_name?: string | null
@@ -193,6 +195,7 @@ export function useAuth() {
     if (payload.avatar) {
       const form = new FormData()
       form.set('name', payload.name)
+      if (payload.nickname !== undefined) form.set('nickname', payload.nickname ?? '')
       form.set('email', payload.email)
       form.set('phone', payload.phone ?? '')
       form.set('school_name', payload.school_name ?? '')
@@ -209,6 +212,7 @@ export function useAuth() {
         method: 'PUT',
         body: {
           name: payload.name,
+          ...(payload.nickname !== undefined ? { nickname: payload.nickname || null } : {}),
           email: payload.email,
           phone: payload.phone || null,
           school_name: payload.school_name || null,
@@ -221,6 +225,24 @@ export function useAuth() {
       })
     }
     await fetchUser()
+  }
+
+  /** แก้บางช่องของโปรไฟล์ เช่น รูปหรือชื่อเล่น โดยส่งค่าที่บันทึกไว้แล้วของช่องอื่นไปด้วย */
+  async function patchProfile(changes: Pick<ProfileInput, 'avatar' | 'nickname'>) {
+    const current = user.value
+    if (!current) throw new Error('ยังไม่ได้เข้าสู่ระบบ')
+    await updateProfile({
+      name: current.name,
+      email: current.email,
+      phone: current.phone ?? null,
+      school_name: current.school_name ?? null,
+      address_line1: current.address?.address_line1 ?? null,
+      subdistrict: current.address?.subdistrict ?? null,
+      district: current.address?.district ?? null,
+      province: current.address?.province ?? null,
+      postal_code: current.address?.postal_code ?? null,
+      ...changes,
+    })
   }
 
   async function changePassword(currentPassword: string, password: string) {
@@ -249,5 +271,5 @@ export function useAuth() {
     await navigateTo('/')
   }
 
-  return { token, user, verifyNotice, loggedIn, classroom, fetchUser, login, loginWithGuestOrder, register, resendVerification, updateProfile, changePassword, logout }
+  return { token, user, verifyNotice, loggedIn, classroom, fetchUser, login, loginWithGuestOrder, register, resendVerification, updateProfile, patchProfile, changePassword, logout }
 }

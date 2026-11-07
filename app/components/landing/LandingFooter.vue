@@ -54,7 +54,8 @@
 
     <div class="border-t border-blue-100 bg-white/60">
       <p class="mx-auto max-w-6xl px-4 py-4 text-center text-xs text-slate-500 md:px-6">
-        © {{ year }} {{ company.name }} สงวนลิขสิทธิ์
+        © {{ year }} {{ company.name }} สงวนลิขสิทธิ์ ·
+        <NuxtLink to="/terms" class="font-semibold text-slate-600 hover:text-blue-700">ข้อกำหนดและเงื่อนไข</NuxtLink>
       </p>
     </div>
   </footer>
@@ -81,5 +82,6 @@ const links = [
   { label: 'ห้องเรียนของฉัน', to: '/home' },
   { label: 'รายการที่เลือก', to: '/cart' },
   { label: 'ติดต่อเรา', to: '/contact' },
+  { label: 'ข้อกำหนดและเงื่อนไข', to: '/terms' },
 ]
 </script>

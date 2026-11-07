@@ -1,40 +1,6 @@
 <template>
   <div class="space-y-8">
-    <section class="relative overflow-hidden rounded-[2rem] bg-amber-50 shadow-sm ring-1 ring-amber-100">
-      <img
-        src="/images/cover/clickclass-learn.webp"
-        alt=""
-        class="absolute inset-0 h-full w-full object-cover object-[80%_center] opacity-90"
-        aria-hidden="true"
-      >
-      <span class="absolute inset-0 bg-gradient-to-r from-amber-50 via-amber-50/90 to-transparent" aria-hidden="true" />
-      <span class="absolute -bottom-16 -start-10 h-48 w-48 rounded-full bg-orange-200/50 blur-3xl" aria-hidden="true" />
-
-      <div class="relative max-w-xl p-6 md:p-10">
-        <p class="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1.5 text-sm font-bold text-orange-600 shadow-sm">
-          <span aria-hidden="true">{{ greeting.emoji }}</span>
-          {{ greeting.text }}
-        </p>
-        <h1 class="mt-4 text-3xl font-extrabold leading-tight text-slate-900 md:text-4xl">
-          {{ user?.name ? `${firstName} พร้อมเรียนแล้วหรือยัง?` : 'ห้องเรียนของฉัน' }}
-        </h1>
-        <p class="mt-2 text-base text-slate-600">{{ cheer }}</p>
-        <p v-if="user?.school_name" class="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-slate-600">
-          <LearnIcon name="location" class="h-3.5 w-3.5 text-orange-500" />
-          {{ user.school_name }}
-        </p>
-
-        <dl v-if="user" class="mt-6 grid max-w-md grid-cols-3 gap-2">
-          <div v-for="stat in stats" :key="stat.label" class="rounded-2xl bg-white/90 px-3 py-3 text-center shadow-sm ring-1 ring-white">
-            <dt class="flex items-center justify-center gap-1 text-[11px] font-bold text-slate-500">
-              <LearnIcon :name="stat.icon" class="h-3.5 w-3.5" :class="stat.iconClass" />
-              {{ stat.label }}
-            </dt>
-            <dd class="mt-1 text-2xl font-extrabold" :class="stat.valueClass">{{ stat.value }}</dd>
-          </div>
-        </dl>
-      </div>
-    </section>
+    <ProfileHeroCard v-if="user" :greeting="greeting" :cheer="cheer" :stats="stats" />
 
     <PageLoading v-if="!user" message="กำลังโหลดห้องเรียน..." />
 
@@ -187,7 +153,7 @@ onUnmounted(() => {
   if (clockTimer) clearInterval(clockTimer)
 })
 
-const firstName = computed(() => user.value?.name?.trim().split(/\s+/)[0] ?? '')
+const firstName = computed(() => user.value?.nickname?.trim() || user.value?.name?.trim().split(/\s+/)[0] || '')
 
 const greeting = computed(() => {
   const hour = new Date(now.value).getHours()

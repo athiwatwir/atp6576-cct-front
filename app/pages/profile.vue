@@ -53,6 +53,11 @@
               class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
+            ชื่อเล่น <span class="font-normal text-slate-400">(แสดงในห้องเรียนและอันดับคะแนน)</span>
+            <input v-model="form.nickname" maxlength="30" placeholder="เช่น น้องเก่ง"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+          </label>
+          <label class="block text-sm font-semibold text-slate-700">
             อีเมล
             <input v-model="form.email" type="email" required
               class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
@@ -187,6 +192,7 @@ const { user, classroom, updateProfile, changePassword } = useAuth()
 
 const form = reactive({
   name: '',
+  nickname: '',
   email: '',
   phone: '',
   school_name: '',
@@ -225,6 +231,7 @@ watch(schoolEl, (element) => {
 watch(user, (value) => {
   if (!value || filled.value) return
   form.name = value.name
+  form.nickname = value.nickname ?? ''
   form.email = value.email
   form.phone = value.phone ?? ''
   form.school_name = value.school_name ?? ''
@@ -303,6 +310,7 @@ async function saveProfile() {
   try {
     await updateProfile({
       name: form.name.trim(),
+      nickname: form.nickname.trim() || null,
       email: form.email.trim(),
       phone: form.phone.trim() || null,
       school_name: form.school_name.trim() || null,

@@ -54,7 +54,7 @@
     <section id="courses" class="mx-auto max-w-6xl px-4 py-10 md:px-6">
       <CatalogGrid title="คอร์สเรียน" description="คอร์สและหลักสูตรที่เปิดขายทั้งหมด" :items="catalog"
         :pending="catalogPending" :failed="catalogFailed" purchasable heading="h2" icon="course"
-        chip="bg-blue-100 text-blue-600" />
+        chip="bg-blue-100 text-blue-600" :columns="3" />
     </section>
 
     <section id="exams" class="mx-auto max-w-6xl px-4 py-10 md:px-6">

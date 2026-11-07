@@ -102,6 +102,10 @@
         >
           {{ submitting ? 'กำลังสร้างคำสั่งซื้อ...' : 'ยืนยันสั่งซื้อ' }}
         </button>
+        <p class="text-center text-xs text-slate-500">
+          การกดยืนยันสั่งซื้อถือว่ายอมรับ
+          <NuxtLink to="/terms" target="_blank" class="font-bold text-blue-700 hover:underline">ข้อกำหนดและเงื่อนไข</NuxtLink>
+        </p>
       </form>
     </div>
 

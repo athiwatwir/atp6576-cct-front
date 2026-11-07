@@ -62,6 +62,10 @@
     <template v-else-if="name === 'infinity'">
       <path d="M7.5 9c-1.9 0-3.5 1.3-3.5 3s1.6 3 3.5 3c3.5 0 5.5-6 9-6 1.9 0 3.5 1.3 3.5 3s-1.6 3-3.5 3c-3.5 0-5.5-6-9-6Z" />
     </template>
+    <template v-else-if="name === 'mail'">
+      <path d="M4 6.5A1.5 1.5 0 0 1 5.5 5h13A1.5 1.5 0 0 1 20 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-11Z" />
+      <path d="m4.5 6.5 7.5 6 7.5-6" />
+    </template>
     <template v-else-if="name === 'camera'">
       <path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2h6l1.5 2h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-9Z" />
       <circle cx="12" cy="13" r="3.2" />
@@ -97,6 +101,6 @@
 
 <script setup lang="ts">
 defineProps<{
-  name: 'home' | 'course' | 'exam' | 'book' | 'contact' | 'cart' | 'classroom' | 'login' | 'profile' | 'logout' | 'signup' | 'play' | 'arrow' | 'clock' | 'infinity' | 'phone' | 'location' | 'check' | 'receipt' | 'truck' | 'expand' | 'collapse' | 'chevron' | 'trophy' | 'camera'
+  name: 'home' | 'course' | 'exam' | 'book' | 'contact' | 'cart' | 'classroom' | 'login' | 'profile' | 'logout' | 'signup' | 'play' | 'arrow' | 'clock' | 'infinity' | 'phone' | 'location' | 'check' | 'receipt' | 'truck' | 'expand' | 'collapse' | 'chevron' | 'trophy' | 'camera' | 'mail'
 }>()
 </script>
