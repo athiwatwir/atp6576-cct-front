@@ -1,9 +1,22 @@
 <template>
   <section class="mx-auto grid max-w-5xl gap-6 px-4 py-10 md:px-6 lg:grid-cols-[1.2fr_0.8fr]">
+    <NuxtLink
+      :to="buyNowMode ? '/home' : '/cart'"
+      class="group inline-flex items-center gap-2 justify-self-start rounded-full bg-white py-2 pe-4 ps-2 text-sm font-bold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md lg:col-span-2"
+    >
+      <span class="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white transition group-hover:-translate-x-0.5">
+        <LearnIcon name="arrow" class="h-4 w-4 rotate-180" />
+      </span>
+      {{ buyNowMode ? 'กลับห้องเรียนของฉัน' : 'กลับไปแก้รายการที่เลือก' }}
+    </NuxtLink>
     <CheckoutSteps :current="2" class="lg:col-span-2" />
     <div>
       <h1 class="text-3xl font-extrabold text-slate-900">ยืนยันคำสั่งซื้อ</h1>
       <p class="mt-2 text-sm text-slate-500">{{ quote?.requires_shipping ? 'รายการนี้ต้องระบุที่อยู่จัดส่ง' : 'ตรวจยอดก่อนยืนยันคำสั่งซื้อ' }}</p>
+      <p v-if="buyNowMode && buyNow" class="mt-3 flex items-start gap-2 rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-800 ring-1 ring-orange-100">
+        <LearnIcon name="clock" class="mt-0.5 h-4 w-4 shrink-0" />
+        <span>ต่ออายุ <span class="font-bold">{{ buyNow.name }}</span> สั่งซื้อรายการนี้รายการเดียว รายการที่เลือกไว้ในตะกร้ายังอยู่ครบ</span>
+      </p>
 
       <form class="mt-6 space-y-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100" @submit.prevent="submit">
         <p class="text-xs text-slate-500">ช่องที่มีเครื่องหมาย <RequiredMark /> ต้องกรอก</p>
@@ -127,9 +140,9 @@
             <dt class="text-slate-500">ราคาสินค้า</dt>
             <dd>{{ formatBaht(quote.subtotal) }}</dd>
           </div>
-          <div v-if="quote.discount" class="flex justify-between">
-            <dt class="text-slate-500">ส่วนลด</dt>
-            <dd>-{{ formatBaht(quote.discount) }}</dd>
+          <div v-if="quote.discount" class="flex justify-between text-emerald-700">
+            <dt>ส่วนลด<template v-if="quote.coupon"> ({{ quote.coupon.code }})</template></dt>
+            <dd class="font-bold">-{{ formatBaht(quote.discount) }}</dd>
           </div>
           <div class="flex justify-between">
             <dt class="text-slate-500">ค่าจัดส่ง</dt>
@@ -142,12 +155,23 @@
         </dl>
       </template>
       <p v-else class="mt-4 text-sm text-slate-500">ยังคำนวณยอดไม่ได้</p>
+      <CouponField
+        class="mt-5 border-t border-slate-100 pt-4"
+        :code="couponInput"
+        :applied="quote?.coupon ?? null"
+        :discount="quote?.discount"
+        :error="couponError"
+        :pending="quoting"
+        :hint="loggedIn ? '' : 'คูปองที่จำกัดสิทธิ์ต่อคนหรือกลุ่มนักเรียน ตรวจตามบัญชีของอีเมลที่กรอก'"
+        @apply="applyCoupon"
+        @remove="removeCoupon"
+      />
     </aside>
   </section>
 </template>
 
 <script setup lang="ts">
-import { planDurationLabel } from '@/composables/useCart'
+import { planDurationLabel, type AppliedCoupon } from '@/composables/useCart'
 
 definePageMeta({ layout: 'landing' })
 
@@ -170,6 +194,7 @@ interface Quote {
   shipping: number
   total: number
   requires_shipping: boolean
+  coupon: AppliedCoupon | null
 }
 
 interface CreatedOrder {
@@ -184,8 +209,38 @@ interface GuestOrderResponse {
 
 const { api } = useApi()
 const { loggedIn, user, fetchUser } = useAuth()
-const { items, couponCode, clear, checkoutItems } = useCart()
+const { items, couponCode, autoCouponOff, clear, checkoutItems, buyNow, buyNowItems, clearBuyNow } = useCart()
 const { remember, setNotice } = useGuestOrders()
+const route = useRoute()
+
+const buyNowRequested = route.query.mode === 'buy-now'
+const buyNowMode = computed(() => buyNowRequested && Boolean(buyNow.value))
+const orderItems = () => (buyNowMode.value ? buyNowItems() : checkoutItems())
+const buyNowCoupon = ref('')
+const couponInput = computed({
+  get: () => (buyNowMode.value ? buyNowCoupon.value : couponCode.value),
+  set: (value: string) => {
+    if (buyNowMode.value) buyNowCoupon.value = value
+    else couponCode.value = value
+  },
+})
+const buyNowAutoOff = ref(false)
+const autoOff = computed({
+  get: () => (buyNowMode.value ? buyNowAutoOff.value : autoCouponOff.value),
+  set: (value: boolean) => {
+    if (buyNowMode.value) buyNowAutoOff.value = value
+    else autoCouponOff.value = value
+  },
+})
+const couponError = ref('')
+/** โค้ดที่กรอก หรือคูปองต่ออายุที่ระบบใส่ให้จากผลคิดยอดล่าสุด */
+const orderCoupon = () => couponInput.value.trim() || (quote.value?.coupon?.auto ? quote.value.coupon.code : undefined)
+const hasOrderItems = computed(() => (buyNowMode.value ? Boolean(buyNow.value) : items.value.length > 0))
+
+function finishOrder() {
+  if (buyNowMode.value) clearBuyNow()
+  else clear()
+}
 
 const form = reactive({
   email: '',
@@ -211,7 +266,10 @@ const validEmail = computed(() => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.t
 
 const missingPlan = items.value.some(item => item.type !== 'book' && (item.plans?.length ?? 0) > 1 && !item.plan_id)
 
-if (items.value.length === 0 || missingPlan) {
+if (buyNowRequested && !buyNowMode.value) {
+  await navigateTo('/home')
+}
+else if (!buyNowMode.value && (items.value.length === 0 || missingPlan)) {
   await navigateTo('/cart')
 }
 
@@ -225,8 +283,8 @@ watch(user, (value) => {
 
 let quoteRequest = 0
 
-async function refreshQuote() {
-  if (items.value.length === 0) return
+async function refreshQuote(): Promise<void> {
+  if (!hasOrderItems.value) return
   const request = ++quoteRequest
   errorMessage.value = ''
   quoting.value = true
@@ -235,14 +293,16 @@ async function refreshQuote() {
       method: 'POST',
       body: {
         ...(!loggedIn.value && validEmail.value ? { email: form.email.trim() } : {}),
-        items: checkoutItems(),
-        coupon_code: couponCode.value.trim() || undefined,
+        items: orderItems(),
+        coupon_code: couponInput.value.trim() || undefined,
+        auto_coupon: !couponInput.value.trim() && !autoOff.value,
       },
     })
     if (request === quoteRequest) quote.value = response.data
   }
   catch (error: unknown) {
     if (request !== quoteRequest) return
+    if (dropInvalidCoupon(error)) return refreshQuote()
     quote.value = null
     errorMessage.value = apiErrorMessage(error, 'คำนวณยอดไม่สำเร็จ')
   }
@@ -251,7 +311,30 @@ async function refreshQuote() {
   }
 }
 
-if (items.value.length) await refreshQuote()
+/** คูปองไม่ผ่านเงื่อนไข: แจ้งเหตุผลและเอาโค้ดออก จะได้คิดยอดและสั่งซื้อต่อได้ */
+function dropInvalidCoupon(error: unknown) {
+  const message = orderCoupon() ? apiFieldError(error, 'coupon_code') : ''
+  if (!message) return false
+  couponError.value = message
+  if (!couponInput.value && quote.value?.coupon?.auto) autoOff.value = true
+  couponInput.value = ''
+  return true
+}
+
+function applyCoupon(code: string) {
+  couponError.value = ''
+  couponInput.value = code
+  refreshQuote()
+}
+
+function removeCoupon() {
+  couponError.value = ''
+  if (!couponInput.value && quote.value?.coupon?.auto) autoOff.value = true
+  couponInput.value = ''
+  refreshQuote()
+}
+
+if (hasOrderItems.value) await refreshQuote()
 
 function shippingBody() {
   if (!quote.value?.requires_shipping) return {}
@@ -283,9 +366,9 @@ async function submit() {
   submitting.value = true
   errorMessage.value = ''
   const body = {
-    items: checkoutItems(),
+    items: orderItems(),
     notes: form.notes.trim() || null,
-    coupon_code: couponCode.value.trim() || undefined,
+    coupon_code: orderCoupon(),
     school_name: form.school_name.trim(),
     province: form.student_province.trim(),
     ...shippingBody(),
@@ -294,7 +377,7 @@ async function submit() {
   try {
     if (loggedIn.value) {
       const response = await api<{ data: CreatedOrder }>('/orders', { method: 'POST', body })
-      clear()
+      finishOrder()
       fetchUser()
       await navigateTo(`/orders/${response.data.id}`)
       return
@@ -317,12 +400,17 @@ async function submit() {
       email,
       accountCreated: result.account_created,
     })
-    clear()
+    finishOrder()
     await navigateTo(`/orders/${result.order.id}`)
   }
   catch (error: unknown) {
     if (apiStatus(error) === 401) {
-      await navigateTo({ path: '/signin', query: { redirect: '/checkout' } })
+      await navigateTo({ path: '/signin', query: { redirect: route.fullPath } })
+      return
+    }
+    if (dropInvalidCoupon(error)) {
+      await refreshQuote()
+      errorMessage.value = 'โค้ดส่วนลดใช้ไม่ได้แล้ว ตรวจยอดใหม่แล้วกดยืนยันอีกครั้ง'
       return
     }
     errorMessage.value = apiErrorMessage(error, 'สร้างคำสั่งซื้อไม่สำเร็จ')

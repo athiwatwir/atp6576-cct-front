@@ -85,6 +85,7 @@ interface Facet {
   slug: string
   name: string
   count: number
+  order: number
 }
 
 const props = defineProps<{
@@ -110,11 +111,11 @@ function facets(items: CatalogItem[], pick: (item: CatalogItem) => NamedRef | nu
   for (const item of items) {
     const ref = pick(item)
     if (!ref?.slug) continue
-    const entry = map.get(ref.slug) ?? { slug: ref.slug, name: ref.name, count: 0 }
+    const entry = map.get(ref.slug) ?? { slug: ref.slug, name: ref.name, count: 0, order: ref.sort_order ?? 0 }
     entry.count++
     map.set(ref.slug, entry)
   }
-  return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, 'th'))
+  return [...map.values()].sort((a, b) => a.order - b.order || a.name.localeCompare(b.name, 'th'))
 }
 
 const searched = computed(() => props.items.filter(matchesSearch))

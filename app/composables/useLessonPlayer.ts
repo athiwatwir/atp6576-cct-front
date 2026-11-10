@@ -38,6 +38,9 @@ export function useLessonPlayer(courseSlug: () => string) {
   const playerEl = ref<HTMLVideoElement | null>(null)
   const resumedLabel = ref('')
   const savedProgress = reactive<Record<number, VideoWatchProgress>>({})
+  /** ผู้ทดลองเรียนดูถึงเวลาที่จำกัดแล้ว ตัวเล่นหยุดอยู่ที่ watch_limit_seconds */
+  const trialEnded = ref(false)
+  const watchLimit = computed(() => activeVideo.value?.watch_limit_seconds || null)
   let lastSentAt = 0
   let saveChain: Promise<void> = Promise.resolve()
 
@@ -63,6 +66,7 @@ export function useLessonPlayer(courseSlug: () => string) {
     if (!video?.video_url) return
     flushProgress(false)
     resumedLabel.value = ''
+    trialEnded.value = false
     lastSentAt = 0
     activeVideo.value = video
   }
@@ -73,13 +77,45 @@ export function useLessonPlayer(courseSlug: () => string) {
     if (!video) return
     const progress = watchOf(video)
     if (progress.status !== 'in_progress' || progress.position_seconds < 5) return
+    const limit = watchLimit.value
+    if (limit !== null && progress.position_seconds >= limit - 5) return
     const max = Number.isFinite(player.duration) ? Math.max(0, player.duration - 1) : progress.position_seconds
     player.currentTime = Math.min(progress.position_seconds, max)
     resumedLabel.value = `เล่นต่อจาก ${lessonClock(player.currentTime)}`
   }
 
+  /** หยุดตัวเล่นที่เวลาทดลองเรียน คืนค่า true เมื่อเกินเวลาแล้ว */
+  function holdAtLimit(player: HTMLVideoElement) {
+    const limit = watchLimit.value
+    if (limit === null) return false
+    if (player.currentTime < limit) {
+      trialEnded.value = false
+      return false
+    }
+    player.pause()
+    if (player.currentTime > limit) player.currentTime = limit
+    if (!trialEnded.value) {
+      trialEnded.value = true
+      void persist(limit, player.duration || 0, false)
+    }
+    return true
+  }
+
+  function onSeeking(event: Event) {
+    holdAtLimit(event.target as HTMLVideoElement)
+  }
+
+  function replayTrial() {
+    const player = playerEl.value
+    if (!player) return
+    trialEnded.value = false
+    player.currentTime = 0
+    void player.play().catch(() => {})
+  }
+
   function onTimeUpdate(event: Event) {
     const player = event.target as HTMLVideoElement
+    if (holdAtLimit(player)) return
     if (!player.duration) return
     const ratio = player.currentTime / player.duration
     const now = Date.now()
@@ -142,6 +178,10 @@ export function useLessonPlayer(courseSlug: () => string) {
     play,
     resume,
     onTimeUpdate,
+    onSeeking,
     flushProgress,
+    watchLimit,
+    trialEnded,
+    replayTrial,
   }
 }

@@ -60,7 +60,7 @@
       <div v-else class="text-center">
         <p class="text-sm text-slate-500">ยอดชำระ {{ amountText(total) }}</p>
         <button type="button" class="mt-3 w-full rounded-full bg-[#00427A] px-5 py-3 text-sm font-bold text-white hover:bg-[#003360] disabled:bg-slate-300" :disabled="busy || loadingState" @click="createQr">
-          {{ busy ? 'กำลังสร้าง QR...' : loadingState ? 'กำลังโหลด...' : 'สร้าง QR พร้อมเพย์' }}
+          {{ busy ? 'กำลังสร้าง QR...' : loadingState ? 'กำลังโหลด...' : 'ชำระด้วยพร้อมเพย์' }}
         </button>
       </div>
     </template>

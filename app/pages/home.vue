@@ -70,17 +70,18 @@
                   </span>
 
                   <div class="mt-auto flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
-                    <NuxtLink
+                    <button
                       v-if="item.expires_at"
-                      :to="renewPath(item)"
+                      type="button"
                       class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition"
                       :class="renewUrgent(item.expires_at)
                         ? 'bg-rose-500 text-white shadow-sm shadow-rose-200 hover:bg-rose-600'
                         : 'bg-white text-orange-600 ring-1 ring-orange-200 hover:bg-orange-50'"
+                      @click="renewItem = item"
                     >
                       <LearnIcon name="clock" class="h-4 w-4" />
                       ต่ออายุ
-                    </NuxtLink>
+                    </button>
                     <NuxtLink :to="item.to" class="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:bg-orange-600">
                       <LearnIcon :name="item.kind === 'exam' ? 'exam' : 'play'" class="h-4 w-4" />
                       {{ item.kind === 'exam' ? 'เข้าสอบ' : 'เข้าเรียน' }}
@@ -105,7 +106,7 @@
 
       <section v-if="recommendPending || recommended.length" class="rounded-[2rem] bg-gradient-to-br from-sky-50 via-white to-orange-50 p-5 ring-1 ring-sky-100 md:p-6">
         <CatalogGrid
-          title="วิชาที่น่าเรียนต่อ"
+          title="คอร์สเรียนที่แนะนำ"
           :description="recommendReason"
           :items="recommended"
           :pending="recommendPending"
@@ -122,6 +123,8 @@
         </div>
       </section>
     </template>
+
+    <RenewPlanModal v-if="renewItem" :item="renewItem" @close="renewItem = null" />
   </div>
 </template>
 
@@ -251,11 +254,7 @@ function expiry(value: string | null | undefined) {
   return { headline: `เหลือ ${days} วัน`, tone: 'bg-emerald-100 text-emerald-700' }
 }
 
-const RENEW_PATHS: Record<ClassroomItem['kind'], string> = { course: '/courses', curriculum: '/curriculums', exam: '/exams' }
-
-function renewPath(item: ClassroomItem) {
-  return `${RENEW_PATHS[item.kind]}/${item.slug}#plans`
-}
+const renewItem = ref<ClassroomItem | null>(null)
 
 function renewUrgent(value: string | null | undefined) {
   if (!value) return false

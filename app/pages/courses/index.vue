@@ -6,11 +6,13 @@
         title="คอร์สเรียน"
         description="คอร์สและหลักสูตรที่เปิดขายทั้งหมด เพิ่มในรายการที่เลือกได้โดยยังไม่ต้องเข้าสู่ระบบ"
         :items="filtered"
+        :sections="levelSections"
         :pending="pending"
         :failed="failed"
         purchasable
         icon="course"
         chip="bg-blue-100 text-blue-600"
+        @select-section="selectLevel"
       >
         <template #toolbar>
           <CatalogFilters
@@ -43,6 +45,7 @@
 </template>
 
 <script setup lang="ts">
+import type { CatalogSection } from '@/components/landing/CatalogGrid.vue'
 import type { HomeBanner } from '@/components/landing/HomeBannerSlider.vue'
 import type { CatalogItem } from '@/composables/useCart'
 
@@ -81,6 +84,28 @@ const filtered = computed(() => {
       .some(value => value?.toLowerCase().includes(keyword))
   })
 })
+
+const levelSections = computed<CatalogSection[] | undefined>(() => {
+  if (level.value) return undefined
+  const groups = new Map<string, CatalogSection & { order: number }>()
+  for (const item of filtered.value) {
+    const key = item.category?.slug ?? ''
+    const group = groups.get(key) ?? {
+      key,
+      title: item.category?.name ?? 'คอร์สอื่น ๆ',
+      items: [],
+      order: item.category ? item.category.sort_order ?? 0 : Number.POSITIVE_INFINITY,
+    }
+    group.items.push(item)
+    groups.set(key, group)
+  }
+  return [...groups.values()].sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, 'th'))
+})
+
+function selectLevel(slug: string) {
+  level.value = slug
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
 
 watch([level, subject, search], ([levelValue, subjectValue, searchValue]) => {
   const query: Record<string, string> = {}

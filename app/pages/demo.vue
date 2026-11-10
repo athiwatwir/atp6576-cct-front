@@ -147,7 +147,7 @@
     >
       <div v-if="selected" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 p-3 md:p-6" @click.self="closeCourse">
         <div role="dialog" aria-modal="true" aria-labelledby="demo-player-title" class="flex max-h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl md:flex-row">
-          <div class="flex min-w-0 flex-1 items-center bg-black">
+          <div class="relative flex min-w-0 flex-1 items-center bg-black">
             <video
               v-if="activeVideo"
               :key="activeVideo.id"
@@ -164,8 +164,16 @@
               @contextmenu.prevent
               @loadedmetadata="resume"
               @timeupdate="onTimeUpdate"
+              @seeking="onSeeking"
               @pause="flushProgress(false)"
               @ended="flushProgress(true)"
+            />
+            <TrialLimitOverlay
+              v-if="trialEnded && watchLimit"
+              :limit-seconds="watchLimit"
+              :buy-to="`/courses/${selected.slug}#plans`"
+              @buy="closeCourse"
+              @replay="replayTrial"
             />
           </div>
           <aside class="flex w-full shrink-0 flex-col md:w-80">
@@ -187,7 +195,8 @@
                   <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold" :class="clip.id === activeVideo?.id ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-500'">{{ index + 1 }}</span>
                   <span class="min-w-0 flex-1">
                     <span class="block">{{ clip.title }}</span>
-                    <span v-if="clip.duration_seconds" class="block text-xs font-normal text-slate-400">{{ lessonClock(clip.duration_seconds) }}</span>
+                    <span v-if="clip.watch_limit_seconds" class="block text-xs font-bold text-orange-600">ทดลองดูได้ {{ lessonClock(clip.watch_limit_seconds) }} แรก</span>
+                    <span v-else-if="clip.duration_seconds" class="block text-xs font-normal text-slate-400">{{ lessonClock(clip.duration_seconds) }}</span>
                   </span>
                 </button>
               </li>
@@ -237,7 +246,7 @@ const { data, pending, error } = useLazyAsyncData('demo-courses', async () => {
     try {
       const detail = (await api<{ data: CatalogItem }>(`/courses/${course.slug}`)).data
       const clips = (detail.chapters ?? []).flatMap(chapter => chapter.videos.filter(video => video.is_trial && video.video_url))
-      return { ...course, ...detail, clips, trialSeconds: clips.reduce((sum, clip) => sum + (clip.duration_seconds ?? 0), 0) }
+      return { ...course, ...detail, clips, trialSeconds: clips.reduce((sum, clip) => sum + (clip.watch_limit_seconds || clip.duration_seconds || 0), 0) }
     }
     catch {
       return { ...course, clips: [], trialSeconds: 0 }
@@ -262,7 +271,7 @@ const visibleCourses = computed(() => (subject.value === 'all'
   : courses.value.filter(course => course.subject?.slug === subject.value)))
 
 const selected = ref<DemoCourse | null>(null)
-const { activeVideo, playerEl, resume, onTimeUpdate, flushProgress, play } = useLessonPlayer(() => selected.value?.slug ?? '')
+const { activeVideo, playerEl, resume, onTimeUpdate, onSeeking, flushProgress, play, watchLimit, trialEnded, replayTrial } = useLessonPlayer(() => selected.value?.slug ?? '')
 
 function openCourse(course: DemoCourse) {
   if (!course.clips.length) return

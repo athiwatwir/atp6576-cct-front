@@ -107,24 +107,40 @@
           </button>
         </div>
         <div v-if="activeVideo?.video_url" class="select-none overflow-hidden rounded-3xl bg-slate-900" @contextmenu.prevent>
-          <video
-            :key="activeVideo.id"
-            ref="playerEl"
-            :src="activeVideo.video_url"
-            controls
-            controlslist="nodownload noremoteplayback"
-            disablepictureinpicture
-            disableremoteplayback
-            playsinline
-            draggable="false"
-            autoplay
-            class="aspect-video w-full"
-            @loadedmetadata="resume"
-            @timeupdate="onTimeUpdate"
-            @pause="flushProgress(false)"
-            @ended="flushProgress(true)"
-          />
-          <p class="px-4 py-3 text-sm font-semibold text-white">{{ activeVideo.title }}</p>
+          <div class="relative">
+            <video
+              :key="activeVideo.id"
+              ref="playerEl"
+              :src="activeVideo.video_url"
+              controls
+              controlslist="nodownload noremoteplayback"
+              disablepictureinpicture
+              disableremoteplayback
+              playsinline
+              draggable="false"
+              autoplay
+              class="aspect-video w-full"
+              @loadedmetadata="resume"
+              @timeupdate="onTimeUpdate"
+              @seeking="onSeeking"
+              @pause="flushProgress(false)"
+              @ended="flushProgress(true)"
+            />
+            <TrialLimitOverlay
+              v-if="trialEnded && watchLimit"
+              :limit-seconds="watchLimit"
+              buy-to="#plans"
+              @buy="goPlans"
+              @replay="replayTrial"
+            />
+          </div>
+          <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+            <p class="text-sm font-semibold text-white">{{ activeVideo.title }}</p>
+            <span v-if="watchLimit" class="inline-flex items-center gap-1 rounded-full bg-orange-500/20 px-2.5 py-1 text-xs font-bold text-orange-200">
+              <LearnIcon name="clock" class="h-3.5 w-3.5" />
+              ทดลองดูได้ {{ clock(watchLimit) }} แรก
+            </span>
+          </div>
         </div>
         <p v-else-if="item.is_trial_available && trialVideos.length === 0" class="rounded-3xl bg-white p-5 text-sm text-slate-500 ring-1 ring-slate-100">
           คอร์สนี้เปิดทดลองเรียน แต่ยังไม่มีคลิปทดลอง
@@ -148,6 +164,9 @@
                     <LearnIcon name="play" class="h-4 w-4" />
                   </span>
                   <span class="min-w-0 flex-1 text-sm font-semibold text-slate-700">{{ video.title }}</span>
+                  <span v-if="video.watch_limit_seconds" class="shrink-0 rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700">
+                    ดูได้ {{ clock(video.watch_limit_seconds) }}
+                  </span>
                   <span v-if="video.duration_seconds" class="shrink-0 text-xs text-slate-500">{{ clock(video.duration_seconds) }}</span>
                 </button>
               </li>
@@ -191,9 +210,17 @@ const {
   play,
   resume,
   onTimeUpdate,
+  onSeeking,
   flushProgress,
+  watchLimit,
+  trialEnded,
+  replayTrial,
 } = useLessonPlayer(() => (props.item?.item_type === 'course' ? props.item.slug : ''))
 const clock = lessonClock
+
+function goPlans() {
+  nextTick(() => document.getElementById('plans')?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
+}
 
 function trialOf(chapter: CourseChapter) {
   return chapter.videos.filter(video => video.is_trial && video.video_url)

@@ -8,8 +8,20 @@
       <h1 class="mt-2 text-3xl font-extrabold text-slate-900">คำสั่งซื้อ {{ order.order_no }}</h1>
       <p class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold" :class="statusClass">{{ order.payment_status_label }}</p>
 
+      <div v-if="order.is_gift" class="mt-4 flex items-start gap-3 rounded-3xl bg-amber-50 p-4 text-sm text-amber-900 ring-1 ring-amber-100">
+        <span class="text-2xl" aria-hidden="true">🎁</span>
+        <p>
+          <span class="block font-extrabold">หนังสือแถมจากโค้ดส่วนลด ไม่มีค่าใช้จ่าย</span>
+          <span v-if="order.gift_for_order" class="block text-amber-800">
+            ได้จากคำสั่งซื้อ
+            <NuxtLink v-if="!guestMode" :to="`/orders/${order.gift_for_order.id}`" class="font-bold underline">{{ order.gift_for_order.order_no }}</NuxtLink>
+            <span v-else class="font-bold">{{ order.gift_for_order.order_no }}</span>
+          </span>
+        </p>
+      </div>
+
       <CheckoutSteps
-        v-if="order.payment_status !== 'refunded'"
+        v-if="order.payment_status !== 'refunded' && !order.is_gift"
         class="mt-6"
         :current="3"
         :complete="order.payment_status === 'paid'"
@@ -49,9 +61,9 @@
           </li>
         </ul>
         <dl class="mt-4 space-y-2 border-t border-slate-100 pt-4 text-sm">
-          <div v-if="order.discount" class="flex justify-between">
-            <dt class="text-slate-500">ส่วนลด</dt>
-            <dd>-{{ formatBaht(order.discount) }}</dd>
+          <div v-if="order.discount" class="flex justify-between text-emerald-700">
+            <dt>ส่วนลด<template v-if="order.coupon"> (โค้ด <span class="font-mono">{{ order.coupon.code }}</span>)</template></dt>
+            <dd class="font-bold">-{{ formatBaht(order.discount) }}</dd>
           </div>
           <div v-if="order.shipping_amount" class="flex justify-between">
             <dt class="text-slate-500">ค่าจัดส่ง</dt>
@@ -77,14 +89,51 @@
         </p>
       </div>
 
+      <div v-if="order.coupon?.gifts.length" class="mt-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-amber-100">
+        <p class="flex items-center gap-2 font-extrabold text-slate-900">
+          <span class="text-xl" aria-hidden="true">🎁</span>
+          {{ order.payment_status === 'paid' ? 'ของแถมจากโค้ด' : 'ชำระเงินแล้วรับของแถมจากโค้ด' }}
+          <span class="font-mono text-amber-600">{{ order.coupon.code }}</span>
+        </p>
+        <ul class="mt-3 space-y-2 text-sm">
+          <li v-for="gift in order.coupon.gifts" :key="`${gift.type}-${gift.id}`" class="flex items-start gap-2.5 rounded-2xl bg-amber-50 px-3 py-2.5">
+            <LearnIcon :name="gift.type === 'exam' ? 'exam' : 'book'" class="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <span class="min-w-0 flex-1">
+              <span class="block font-semibold text-slate-800">{{ gift.name }}</span>
+              <span class="block text-xs text-slate-500">
+                <template v-if="gift.type === 'exam'">{{ order.payment_status === 'paid' ? 'เปิดสิทธิ์ข้อสอบให้แล้ว ทำได้ในห้องเรียนของฉัน' : 'ได้สิทธิ์ทำข้อสอบหลังชำระเงิน' }}</template>
+                <template v-else>{{ order.payment_status === 'paid' ? 'สร้างคำสั่งซื้อหนังสือแถมให้แล้ว จัดส่งตามที่อยู่ที่ให้ไว้' : 'ส่งหนังสือให้ฟรีหลังชำระเงิน' }}</template>
+              </span>
+            </span>
+          </li>
+        </ul>
+        <div v-if="order.payment_status === 'paid'" class="mt-3 flex flex-wrap gap-2">
+          <NuxtLink v-if="loggedIn && order.coupon.gifts.some(gift => gift.type === 'exam')" to="/home" class="inline-flex items-center gap-1.5 rounded-full bg-amber-500 px-4 py-2 text-sm font-bold text-white hover:bg-amber-600">
+            <LearnIcon name="exam" class="h-4 w-4" />
+            ไปทำข้อสอบแถม
+          </NuxtLink>
+          <template v-for="gift in order.gift_orders ?? []" :key="gift.id">
+            <NuxtLink v-if="!guestMode" :to="`/orders/${gift.id}`" class="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-bold text-amber-700 ring-1 ring-amber-200 hover:bg-amber-50">
+              <LearnIcon name="truck" class="h-4 w-4" />
+              ติดตามหนังสือแถม {{ gift.order_no }}
+            </NuxtLink>
+            <span v-else class="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-bold text-amber-700 ring-1 ring-amber-200">
+              <LearnIcon name="truck" class="h-4 w-4" />
+              หนังสือแถม {{ gift.order_no }} (ดูได้เมื่อเข้าสู่ระบบ)
+            </span>
+          </template>
+        </div>
+      </div>
+
       <div v-if="order.payment_status === 'paid'" class="mt-6 overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-50 via-white to-emerald-50 p-6 shadow-sm ring-1 ring-emerald-100 md:p-7">
         <div class="flex items-start gap-4">
           <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200 ring-4 ring-emerald-100">
             <LearnIcon name="check" class="h-8 w-8" />
           </span>
           <div class="min-w-0">
-            <p class="text-2xl font-extrabold text-emerald-700">ชำระเงินเรียบร้อย</p>
-            <p class="mt-1 text-sm text-slate-500">
+            <p class="text-2xl font-extrabold text-emerald-700">{{ order.is_gift ? 'ได้รับเป็นของแถม' : 'ชำระเงินเรียบร้อย' }}</p>
+            <p v-if="order.is_gift" class="mt-1 text-sm text-slate-500">ไม่ต้องชำระเงิน เราจะจัดส่งหนังสือตามที่อยู่ด้านบน</p>
+            <p v-else class="mt-1 text-sm text-slate-500">
               ยอด {{ formatBaht(order.payment?.amount ?? order.total) }}
               <template v-if="order.payment?.method_label"> · {{ order.payment.method_label }}</template>
               <template v-if="order.paid_at"> · {{ formatThaiDate(order.paid_at) }}</template>
@@ -158,6 +207,14 @@
               :class="option.method === method ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-100' : 'border-slate-200 hover:border-blue-200'"
             >
               <input v-model="method" type="radio" name="payment-method" :value="option.method" class="h-4 w-4 accent-blue-600">
+              <span class="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white ring-1 ring-slate-200">
+                <img v-if="PAYMENT_ICONS[option.method]" :src="PAYMENT_ICONS[option.method]" alt="" class="h-full w-full object-contain" width="40" height="40">
+                <svg v-else viewBox="0 0 24 24" class="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M3 9.5 12 4l9 5.5" />
+                  <path d="M4.5 10v8M9.5 10v8M14.5 10v8M19.5 10v8" />
+                  <path d="M3 20h18" />
+                </svg>
+              </span>
               <span class="min-w-0 flex-1">
                 <span class="block font-bold text-slate-800">{{ option.label }}</span>
                 <span class="block text-xs text-slate-500">{{ option.fee_label || 'ไม่มีค่าธรรมเนียม' }}</span>
@@ -221,7 +278,7 @@
 
 <script setup lang="ts">
 import { NuxtLink } from '#components'
-import { planDurationLabel } from '@/composables/useCart'
+import { planDurationLabel, type AppliedCoupon } from '@/composables/useCart'
 
 definePageMeta({ layout: 'landing' })
 
@@ -229,6 +286,15 @@ type PaymentMethod = string
 type PaymentType = 'qr' | 'card' | 'wallet' | 'transfer'
 
 const LEGACY_TYPES: Record<string, PaymentType> = { thai_qr: 'qr', credit_card: 'card', bank_transfer: 'transfer' }
+
+const PAYMENT_ICONS: Record<string, string> = {
+  thai_qr: '/images/icon/thai-qr.webp',
+  credit_card: '/images/icon/credit-card.webp',
+  truemoney: '/images/icon/truemoney.webp',
+  shopeepay: '/images/icon/shopeepay.webp',
+  rabbit_linepay: '/images/icon/line-pay.webp',
+  wechat_pay: '/images/icon/wechat-pay.webp',
+}
 
 interface OrderItem {
   type: string
@@ -272,6 +338,10 @@ interface StoreOrder {
     failure_message: string | null
   } | null
   items: OrderItem[]
+  coupon?: AppliedCoupon | null
+  is_gift?: boolean
+  gift_for_order?: { id: number, order_no: string | null } | null
+  gift_orders?: { id: number, order_no: string }[]
 }
 
 interface PaymentOption {

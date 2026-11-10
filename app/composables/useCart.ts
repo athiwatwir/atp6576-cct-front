@@ -2,6 +2,7 @@ export interface NamedRef {
   id: number
   name: string
   slug: string
+  sort_order?: number
 }
 
 export interface StoreBook {
@@ -36,9 +37,28 @@ export interface CourseVideo {
   description?: string | null
   duration_seconds?: number | null
   is_trial: boolean
+  /** วินาทีที่ผู้ทดลองเรียนดูได้ตามที่แอดมินตั้ง null = ดูได้ทั้งคลิป */
+  trial_seconds?: number | null
+  /** วินาทีที่ผู้ใช้คนนี้ดูได้จริง null = ดูได้ทั้งคลิป (รวมผู้ที่ซื้อแล้ว) */
+  watch_limit_seconds?: number | null
   video_url: string | null
   progress?: VideoWatchProgress
   my_rating?: VideoRating | null
+}
+
+export interface CouponGift {
+  type: 'exam' | 'book'
+  id: number
+  name: string
+}
+
+/** คูปองที่ผ่านเงื่อนไขแล้ว จากผลคิดยอดหรือออเดอร์ */
+export interface AppliedCoupon {
+  code: string
+  description: string | null
+  gifts: CouponGift[]
+  /** ระบบใส่คูปองต่ออายุให้เอง (ลูกค้าไม่ได้กรอกโค้ด) */
+  auto?: boolean
 }
 
 export interface VideoRating {
@@ -142,6 +162,7 @@ export interface CheckoutItemInput {
 }
 
 const STORAGE_KEY = 'cct-cart'
+const BUY_NOW_KEY = 'cct-buy-now'
 let noticeTimer = 0
 
 export function planDurationLabel(plan: Pick<PricePlan, 'duration_days'>) {
@@ -209,6 +230,8 @@ export function useCart() {
   const count = computed(() => items.value.reduce((sum, item) => sum + item.quantity, 0))
   const subtotal = computed(() => items.value.reduce((sum, item) => sum + item.unit_price * item.quantity, 0))
   const couponCode = useState('cart-coupon', () => '')
+  /** ลูกค้ากดยกเลิกคูปองต่ออายุที่ระบบใส่ให้ ไม่ต้องใส่ให้อีก */
+  const autoCouponOff = useState('cart-coupon-auto-off', () => false)
 
   function quantityOf(type: CartItemType, id: number) {
     return items.value.find(item => item.type === type && item.id === id)?.quantity ?? 0
@@ -352,7 +375,54 @@ export function useCart() {
   function clear() {
     items.value = []
     couponCode.value = ''
+    autoCouponOff.value = false
   }
 
-  return { items, notice, count, subtotal, couponCode, quantityOf, planOf, canAdd, addBook, addCatalog, setPlan, checkoutItems, syncCatalogLines, setQuantity, remove, clear }
+  /** ซื้อทันที (เช่น ต่ออายุ) ไปหน้าชำระเงินโดยไม่ยุ่งกับรายการที่เลือกในตะกร้า */
+  const buyNow = useState<CartLine | null>('cart-buy-now', () => null)
+  const buyNowHydrated = useState('cart-buy-now-hydrated', () => false)
+
+  if (import.meta.client && !buyNowHydrated.value) {
+    buyNowHydrated.value = true
+    try {
+      const parsed = JSON.parse(sessionStorage.getItem(BUY_NOW_KEY) || 'null') as unknown
+      buyNow.value = isCartLine(parsed) ? parsed : null
+    }
+    catch {
+      buyNow.value = null
+    }
+  }
+
+  function startBuyNow(item: CatalogItem, planId: number | null) {
+    const plans = item.price_plans ?? []
+    const plan = plans.find(entry => entry.id === planId) ?? (plans.length === 1 ? plans[0] : undefined)
+    if (plans.length > 1 && !plan) return false
+    buyNow.value = {
+      type: item.item_type,
+      id: item.id,
+      slug: item.slug,
+      name: item.name,
+      thumbnail_url: item.thumbnail_url,
+      unit_price: plan?.effective_price ?? item.effective_price,
+      quantity: 1,
+      stock: null,
+      plan_id: plan?.id ?? null,
+      plans,
+    }
+    sessionStorage.setItem(BUY_NOW_KEY, JSON.stringify(buyNow.value))
+    return true
+  }
+
+  function clearBuyNow() {
+    buyNow.value = null
+    if (import.meta.client) sessionStorage.removeItem(BUY_NOW_KEY)
+  }
+
+  function buyNowItems(): CheckoutItemInput[] {
+    const line = buyNow.value
+    if (!line) return []
+    return [{ type: line.type, id: line.id, quantity: 1, ...(line.plan_id ? { plan_id: line.plan_id } : {}) }]
+  }
+
+  return { items, notice, count, subtotal, couponCode, autoCouponOff, quantityOf, planOf, canAdd, addBook, addCatalog, setPlan, checkoutItems, syncCatalogLines, setQuantity, remove, clear, buyNow, startBuyNow, clearBuyNow, buyNowItems }
 }

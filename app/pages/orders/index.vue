@@ -9,9 +9,13 @@
         <NuxtLink :to="`/orders/${order.id}`" class="flex items-center justify-between gap-3 rounded-3xl bg-white px-5 py-4 shadow-sm ring-1 ring-slate-100">
           <span>
             <span class="block font-bold text-slate-800">{{ order.order_no }}</span>
-            <span class="text-sm text-slate-500">{{ order.payment_status_label }}</span>
+            <span class="text-sm text-slate-500">{{ order.is_gift ? 'ของแถมจากโค้ดส่วนลด' : order.payment_status_label }}</span>
+            <span v-if="order.coupon && !order.is_gift" class="mt-1 inline-flex rounded-full bg-emerald-50 px-2 py-0.5 font-mono text-xs font-bold text-emerald-700">
+              {{ order.coupon.code }}<template v-if="order.coupon.gifts.length"> · มีของแถม</template>
+            </span>
           </span>
-          <span class="font-bold text-blue-700">{{ formatBaht(order.total) }}</span>
+          <span v-if="order.is_gift" class="rounded-full bg-amber-100 px-3 py-1 text-sm font-bold text-amber-700">🎁 ฟรี</span>
+          <span v-else class="font-bold text-blue-700">{{ formatBaht(order.total) }}</span>
         </NuxtLink>
       </li>
     </ul>
@@ -19,6 +23,8 @@
 </template>
 
 <script setup lang="ts">
+import type { AppliedCoupon } from '@/composables/useCart'
+
 useHead({ title: 'ประวัติการสั่งซื้อ | ClickClass Tutor' })
 
 interface OrderSummary {
@@ -26,6 +32,8 @@ interface OrderSummary {
   order_no: string
   total: number
   payment_status_label: string
+  is_gift?: boolean
+  coupon?: AppliedCoupon | null
 }
 
 const { api } = useApi()

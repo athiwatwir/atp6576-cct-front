@@ -116,8 +116,6 @@ definePageMeta({ layout: 'landing' })
 const { api } = useApi()
 const { fetchAll } = useStorefront()
 
-useHead({ title: 'ClickClass Tutor' })
-
 const { data: bannerResponse, pending } = useLazyAsyncData('home-banners', () =>
   api<{ data: HomeBanner[] }>('/banners', { query: { placement: 'home' } }),
 )
