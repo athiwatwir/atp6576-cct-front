@@ -102,7 +102,7 @@
               ข้อมูลครบแล้ว ไปชำระเงินได้เลย
             </p>
             <p class="mt-1 text-xs text-emerald-800">
-              ผู้เรียน {{ readyProfile.name }} · {{ readyProfile.school }} · จ.{{ readyProfile.province }}
+              ผู้เรียน {{ readyProfile.name }} · {{ readyProfile.school }} · เรียนที่ จ.{{ readyProfile.province }}
             </p>
             <p v-if="readyProfile.shipping" class="mt-1 text-xs text-emerald-800">
               ส่งถึง {{ readyProfile.shipping.name }} {{ readyProfile.shipping.phone }} · {{ shippingAddress(readyProfile.shipping) }}
@@ -240,7 +240,7 @@ const readyProfile = computed(() => {
   const current = user.value
   if (!loggedIn.value || !current || !quote.value) return null
   const school = filled(current.school_name)
-  const province = filled(current.address?.province)
+  const province = filled(current.school_province)
   if (!school || !province) return null
   if (!quote.value.requires_shipping) return { name: current.name, school, province, shipping: null }
 
@@ -251,10 +251,10 @@ const readyProfile = computed(() => {
     address_line1: filled(address?.address_line1),
     subdistrict: filled(address?.subdistrict) || null,
     district: filled(address?.district),
-    province,
+    province: filled(address?.province),
     postal_code: filled(address?.postal_code),
   }
-  const complete = shipping.name && shipping.phone && shipping.address_line1 && shipping.district && /^\d{5}$/.test(shipping.postal_code)
+  const complete = shipping.name && shipping.phone && shipping.address_line1 && shipping.district && shipping.province && /^\d{5}$/.test(shipping.postal_code)
   return complete ? { name: current.name, school, province, shipping } : null
 })
 

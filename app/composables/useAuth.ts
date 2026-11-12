@@ -37,6 +37,8 @@ export interface StudentUser {
   email: string
   phone?: string | null
   school_name?: string | null
+  /** จังหวัดที่เรียน แยกจากจังหวัดในที่อยู่ */
+  school_province?: string | null
   address?: StudentAddress | null
   avatar_url?: string | null
   status?: string
@@ -55,6 +57,8 @@ export interface ProfileInput {
   email: string
   phone?: string | null
   school_name?: string | null
+  /** ไม่ส่ง (undefined) ค่าเดิมไม่เปลี่ยน */
+  school_province?: string | null
   address_line1?: string | null
   subdistrict?: string | null
   district?: string | null
@@ -133,11 +137,12 @@ export function useAuth() {
     return profileRequest
   }
 
-  async function login(email: string, password: string) {
+  /** identifier เป็นอีเมลหรือเบอร์โทรก็ได้ (มี @ ถือเป็นอีเมล) */
+  async function login(identifier: string, password: string) {
     const { api } = useApi()
     const response = await api<AuthResponse>('/auth/login', {
       method: 'POST',
-      body: { email, password },
+      body: { login: identifier.trim(), password },
     })
     if (import.meta.client) sessionStorage.removeItem(PROFILE_REMINDER_KEY)
     token.value = response.token
@@ -209,6 +214,7 @@ export function useAuth() {
       form.set('email', payload.email)
       form.set('phone', payload.phone ?? '')
       form.set('school_name', payload.school_name ?? '')
+      if (payload.school_province !== undefined) form.set('school_province', payload.school_province ?? '')
       form.set('address_line1', payload.address_line1 ?? '')
       form.set('subdistrict', payload.subdistrict ?? '')
       form.set('district', payload.district ?? '')
@@ -226,6 +232,7 @@ export function useAuth() {
           email: payload.email,
           phone: payload.phone || null,
           school_name: payload.school_name || null,
+          ...(payload.school_province !== undefined ? { school_province: payload.school_province || null } : {}),
           address_line1: payload.address_line1 || null,
           subdistrict: payload.subdistrict || null,
           district: payload.district || null,

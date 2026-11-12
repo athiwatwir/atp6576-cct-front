@@ -1,10 +1,9 @@
 <template>
   <section class="mx-auto grid max-w-5xl gap-6 px-4 py-10 md:px-6 lg:grid-cols-[1.2fr_0.8fr]">
-    <NuxtLink
-      :to="buyNowMode ? '/home' : '/cart'"
-      class="group inline-flex items-center gap-2 justify-self-start rounded-full bg-white py-2 pe-4 ps-2 text-sm font-bold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md lg:col-span-2"
-    >
-      <span class="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white transition group-hover:-translate-x-0.5">
+    <NuxtLink :to="buyNowMode ? '/home' : '/cart'"
+      class="group inline-flex items-center gap-2 justify-self-start rounded-full bg-white py-2 pe-4 ps-2 text-sm font-bold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-50 hover:shadow-md lg:col-span-2">
+      <span
+        class="flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white transition group-hover:-translate-x-0.5">
         <LearnIcon name="arrow" class="h-4 w-4 rotate-180" />
       </span>
       {{ buyNowMode ? 'กลับห้องเรียนของฉัน' : 'กลับไปแก้รายการที่เลือก' }}
@@ -12,34 +11,47 @@
     <CheckoutSteps :current="2" class="lg:col-span-2" />
     <div>
       <h1 class="text-3xl font-extrabold text-slate-900">ยืนยันคำสั่งซื้อ</h1>
-      <p class="mt-2 text-sm text-slate-500">{{ quote?.requires_shipping ? 'รายการนี้ต้องระบุที่อยู่จัดส่ง' : 'ตรวจยอดก่อนยืนยันคำสั่งซื้อ' }}</p>
-      <p v-if="buyNowMode && buyNow" class="mt-3 flex items-start gap-2 rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-800 ring-1 ring-orange-100">
+      <p class="mt-2 text-sm text-slate-500">{{ quote?.requires_shipping ? 'รายการนี้ต้องระบุที่อยู่จัดส่ง' :
+        'ตรวจยอดก่อนยืนยันคำสั่งซื้อ' }}</p>
+      <p v-if="buyNowMode && buyNow"
+        class="mt-3 flex items-start gap-2 rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-800 ring-1 ring-orange-100">
         <LearnIcon name="clock" class="mt-0.5 h-4 w-4 shrink-0" />
-        <span>ต่ออายุ <span class="font-bold">{{ buyNow.name }}</span> สั่งซื้อรายการนี้รายการเดียว รายการที่เลือกไว้ในตะกร้ายังอยู่ครบ</span>
+        <span>ต่ออายุ <span class="font-bold">{{ buyNow.name }}</span> สั่งซื้อรายการนี้รายการเดียว
+          รายการที่เลือกไว้ในตะกร้ายังอยู่ครบ</span>
       </p>
 
       <form class="mt-6 space-y-6 rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100" @submit.prevent="submit">
-        <p class="text-xs text-slate-500">ช่องที่มีเครื่องหมาย <RequiredMark /> ต้องกรอก</p>
+        <p class="text-xs text-slate-500">ช่องที่มีเครื่องหมาย
+          <RequiredMark /> ต้องกรอก
+        </p>
 
         <fieldset v-if="!loggedIn" class="space-y-4">
           <legend class="text-sm font-extrabold text-slate-900">ข้อมูลผู้ซื้อ</legend>
           <div class="rounded-2xl bg-blue-50 p-4 text-sm text-slate-700">
             <p class="font-bold text-slate-900">สั่งซื้อได้เลยโดยไม่ต้องสมัครสมาชิก</p>
-            <p class="mt-1">กรอกอีเมลเพื่อรับคำสั่งซื้อ ถ้ายังไม่มีบัญชี ระบบจะสร้างบัญชีให้ และส่งรหัสผ่านสำหรับเข้าห้องเรียนไปที่อีเมลนี้หลังชำระเงินสำเร็จ</p>
-            <NuxtLink :to="{ path: '/signin', query: { redirect: '/checkout' } }" class="mt-2 inline-flex font-bold text-blue-700">มีบัญชีอยู่แล้ว เข้าสู่ระบบ</NuxtLink>
+            <p class="mt-1">กรอกอีเมลเพื่อรับคำสั่งซื้อ ถ้ายังไม่มีบัญชี ระบบจะสร้างบัญชีให้
+              และส่งรหัสผ่านสำหรับเข้าห้องเรียนไปที่อีเมลนี้หลังชำระเงินสำเร็จ</p>
+            <NuxtLink :to="{ path: '/signin', query: { redirect: '/checkout' } }"
+              class="mt-2 inline-flex font-bold text-blue-700">มีบัญชีอยู่แล้ว เข้าสู่ระบบ</NuxtLink>
           </div>
           <label class="block text-sm font-semibold text-slate-700">
-            อีเมล<RequiredMark />
-            <input v-model="form.email" type="email" required autocomplete="email" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal" @change="refreshQuote">
+            อีเมล (สำหรับเข้าสู่ระบบ)
+            <RequiredMark />
+            <input v-model="form.email" type="email" required autocomplete="email"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal" @change="refreshQuote">
           </label>
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="block text-sm font-semibold text-slate-700">
-              ชื่อ-นามสกุล<RequiredMark v-if="quote?.requires_shipping" />
-              <input v-model="form.name" :required="Boolean(quote?.requires_shipping)" maxlength="150" autocomplete="name" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              ชื่อ-นามสกุล
+              <RequiredMark v-if="quote?.requires_shipping" />
+              <input v-model="form.name" :required="Boolean(quote?.requires_shipping)" maxlength="150"
+                autocomplete="name" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              เบอร์โทร<RequiredMark v-if="quote?.requires_shipping" />
-              <input v-model="form.phone" type="tel" :required="Boolean(quote?.requires_shipping)" maxlength="30" autocomplete="tel" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              เบอร์โทร
+              <RequiredMark v-if="quote?.requires_shipping" />
+              <input v-model="form.phone" type="tel" :required="Boolean(quote?.requires_shipping)" maxlength="30"
+                autocomplete="tel" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
           </div>
         </fieldset>
@@ -48,12 +60,17 @@
           <legend class="text-sm font-extrabold text-slate-900">ข้อมูลผู้เรียน</legend>
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="block text-sm font-semibold text-slate-700">
-              โรงเรียน<RequiredMark />
-              <input v-model="form.school_name" required maxlength="255" placeholder="เช่น โรงเรียนบ้านหนองจ็อม" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              โรงเรียน
+              <RequiredMark />
+              <input v-model="form.school_name" required maxlength="255" placeholder="เช่น โรงเรียนบ้านหนองจ็อม"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              จังหวัด<RequiredMark />
-              <input v-model="form.student_province" required maxlength="100" list="checkout-provinces" autocomplete="address-level1" placeholder="พิมพ์หรือเลือกจังหวัด" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              จังหวัดที่เรียน
+              <RequiredMark />
+              <input v-model="form.school_province" required maxlength="100" list="checkout-provinces"
+                autocomplete="off" placeholder="พิมพ์หรือเลือกจังหวัด"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
           </div>
           <p class="text-xs text-slate-400">ใช้บันทึกในโปรไฟล์ผู้เรียน แก้ไขภายหลังได้ที่หน้าโปรไฟล์</p>
@@ -63,38 +80,52 @@
           <legend class="text-sm font-extrabold text-slate-900">ที่อยู่จัดส่ง</legend>
           <template v-if="loggedIn">
             <label class="block text-sm font-semibold text-slate-700">
-              ชื่อผู้รับ<RequiredMark />
-              <input v-model="form.name" required maxlength="150" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              ชื่อผู้รับ
+              <RequiredMark />
+              <input v-model="form.name" required maxlength="150"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              เบอร์โทร<RequiredMark />
-              <input v-model="form.phone" required maxlength="30" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              เบอร์โทร
+              <RequiredMark />
+              <input v-model="form.phone" required maxlength="30"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
           </template>
           <label class="block text-sm font-semibold text-slate-700">
-            ที่อยู่<RequiredMark />
-            <input v-model="form.address_line1" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            ที่อยู่
+            <RequiredMark />
+            <input v-model="form.address_line1" required
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             ที่อยู่เพิ่มเติม
-            <input v-model="form.address_line2" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+            <input v-model="form.address_line2"
+              class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
           </label>
           <div class="grid gap-4 sm:grid-cols-2">
             <label class="block text-sm font-semibold text-slate-700">
               ตำบล/แขวง
-              <input v-model="form.subdistrict" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              <input v-model="form.subdistrict"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              อำเภอ/เขต<RequiredMark />
-              <input v-model="form.district" required class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              อำเภอ/เขต
+              <RequiredMark />
+              <input v-model="form.district" required
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              จังหวัด<RequiredMark />
-              <input v-model="form.province" required list="checkout-provinces" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              จังหวัด
+              <RequiredMark />
+              <input v-model="form.province" required list="checkout-provinces"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
             <label class="block text-sm font-semibold text-slate-700">
-              รหัสไปรษณีย์<RequiredMark />
-              <input v-model="form.postal_code" required inputmode="numeric" maxlength="5" pattern="[0-9]{5}" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
+              รหัสไปรษณีย์
+              <RequiredMark />
+              <input v-model="form.postal_code" required inputmode="numeric" maxlength="5" pattern="[0-9]{5}"
+                class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal">
             </label>
           </div>
         </fieldset>
@@ -105,19 +136,19 @@
 
         <label class="block text-sm font-semibold text-slate-700">
           หมายเหตุ
-          <textarea v-model="form.notes" rows="2" class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal" />
+          <textarea v-model="form.notes" rows="2"
+            class="mt-1 w-full rounded-2xl border border-slate-200 px-3 py-2 font-normal" />
         </label>
         <p v-if="errorMessage" class="text-sm text-rose-600">{{ errorMessage }}</p>
-        <button
-          type="submit"
+        <button type="submit"
           class="w-full rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-slate-300"
-          :disabled="submitting || quoting || !quote"
-        >
+          :disabled="submitting || quoting || !quote">
           {{ submitting ? 'กำลังสร้างคำสั่งซื้อ...' : 'ยืนยันสั่งซื้อ' }}
         </button>
         <p class="text-center text-xs text-slate-500">
           การกดยืนยันสั่งซื้อถือว่ายอมรับ
-          <NuxtLink to="/terms" target="_blank" class="font-bold text-blue-700 hover:underline">ข้อกำหนดและเงื่อนไข</NuxtLink>
+          <NuxtLink to="/terms" target="_blank" class="font-bold text-blue-700 hover:underline">ข้อกำหนดและเงื่อนไข
+          </NuxtLink>
         </p>
       </form>
     </div>
@@ -155,17 +186,10 @@
         </dl>
       </template>
       <p v-else class="mt-4 text-sm text-slate-500">ยังคำนวณยอดไม่ได้</p>
-      <CouponField
-        class="mt-5 border-t border-slate-100 pt-4"
-        :code="couponInput"
-        :applied="quote?.coupon ?? null"
-        :discount="quote?.discount"
-        :error="couponError"
-        :pending="quoting"
+      <CouponField class="mt-5 border-t border-slate-100 pt-4" :code="couponInput" :applied="quote?.coupon ?? null"
+        :discount="quote?.discount" :error="couponError" :pending="quoting"
         :hint="loggedIn ? '' : 'คูปองที่จำกัดสิทธิ์ต่อคนหรือกลุ่มนักเรียน ตรวจตามบัญชีของอีเมลที่กรอก'"
-        @apply="applyCoupon"
-        @remove="removeCoupon"
-      />
+        @apply="applyCoupon" @remove="removeCoupon" />
     </aside>
   </section>
 </template>
@@ -247,7 +271,7 @@ const form = reactive({
   name: '',
   phone: '',
   school_name: '',
-  student_province: '',
+  school_province: '',
   address_line1: '',
   address_line2: '',
   subdistrict: '',
@@ -278,7 +302,7 @@ watch(user, (value) => {
   if (!form.name) form.name = value.name
   if (!form.phone && value.phone) form.phone = value.phone
   if (!form.school_name && value.school_name) form.school_name = value.school_name
-  if (!form.student_province && value.address?.province) form.student_province = value.address.province
+  if (!form.school_province && value.school_province) form.school_province = value.school_province
 }, { immediate: true })
 
 let quoteRequest = 0
@@ -354,8 +378,8 @@ function shippingBody() {
 
 async function submit() {
   if (!quote.value || submitting.value) return
-  if (!form.school_name.trim() || !form.student_province.trim()) {
-    errorMessage.value = 'กรุณากรอกโรงเรียนและจังหวัดของผู้เรียน'
+  if (!form.school_name.trim() || !form.school_province.trim()) {
+    errorMessage.value = 'กรุณากรอกโรงเรียนและจังหวัดที่เรียน'
     return
   }
   if (quote.value.requires_shipping && !/^\d{5}$/.test(form.postal_code.trim())) {
@@ -370,7 +394,7 @@ async function submit() {
     notes: form.notes.trim() || null,
     coupon_code: orderCoupon(),
     school_name: form.school_name.trim(),
-    province: form.student_province.trim(),
+    province: form.school_province.trim(),
     ...shippingBody(),
   }
 

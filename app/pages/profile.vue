@@ -6,39 +6,45 @@
       <section
         class="flex flex-col gap-4 rounded-[2rem] bg-gradient-to-r from-sky-100 to-blue-50 p-6 sm:flex-row sm:items-center">
         <div class="shrink-0">
-          <button
-            type="button"
+          <button type="button"
             class="group relative block h-24 w-24 rounded-full focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300 disabled:cursor-wait"
-            :disabled="avatarPending"
-            aria-label="เปลี่ยนรูปโปรไฟล์"
-            @click="avatarInput?.click()"
-          >
-            <span class="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white text-3xl font-extrabold text-blue-700 shadow-md ring-4 ring-white">
+            :disabled="avatarPending" aria-label="เปลี่ยนรูปโปรไฟล์" @click="avatarInput?.click()">
+            <span
+              class="flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-white text-3xl font-extrabold text-blue-700 shadow-md ring-4 ring-white">
               <img v-if="previewUrl || user.avatar_url" :src="previewUrl || user.avatar_url || ''" alt=""
                 class="h-full w-full object-cover">
               <span v-else>{{ initial }}</span>
             </span>
-            <span class="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-slate-900/50 text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
+            <span
+              class="absolute inset-0 flex flex-col items-center justify-center rounded-full bg-slate-900/50 text-white opacity-0 transition group-hover:opacity-100 group-focus-visible:opacity-100"
               :class="{ 'opacity-100': avatarPending }" aria-hidden="true">
-              <span v-if="avatarPending" class="h-7 w-7 animate-spin rounded-full border-[3px] border-white/40 border-t-white" />
+              <span v-if="avatarPending"
+                class="h-7 w-7 animate-spin rounded-full border-[3px] border-white/40 border-t-white" />
               <template v-else>
                 <LearnIcon name="camera" class="h-6 w-6" />
                 <span class="mt-0.5 text-[11px] font-bold">เปลี่ยนรูป</span>
               </template>
             </span>
-            <span class="absolute -bottom-0.5 -end-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow-md ring-2 ring-white transition group-hover:bg-blue-700" aria-hidden="true">
+            <span
+              class="absolute -bottom-0.5 -end-0.5 flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white shadow-md ring-2 ring-white transition group-hover:bg-blue-700"
+              aria-hidden="true">
               <LearnIcon name="camera" class="h-4 w-4" />
             </span>
           </button>
-          <input ref="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden" @change="onAvatar">
+          <input ref="avatarInput" type="file" accept="image/jpeg,image/png,image/webp" class="hidden"
+            @change="onAvatar">
         </div>
         <div>
           <h1 class="text-3xl font-extrabold text-slate-900">{{ user.name }}</h1>
-          <p class="mt-1 text-sm text-slate-600">โรงเรียน: {{ user.school_name || 'ยังไม่ได้ระบุโรงเรียน' }}</p>
-          <p v-if="avatarMessage" class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold" :class="avatarError ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'">
+          <p class="mt-1 text-sm text-slate-600">
+            โรงเรียน: {{ user.school_name || 'ยังไม่ได้ระบุโรงเรียน' }}<template v-if="user.school_province"> · จ.{{ user.school_province }}</template>
+          </p>
+          <p v-if="avatarMessage" class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold"
+            :class="avatarError ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'">
             {{ avatarMessage }}
           </p>
-          <p v-else class="mt-2 text-xs text-slate-500">แตะที่รูปเพื่อเปลี่ยนรูปโปรไฟล์ (jpg, png หรือ webp ไม่เกิน 4 MB)</p>
+          <p v-else class="mt-2 text-xs text-slate-500">แตะที่รูปเพื่อเปลี่ยนรูปโปรไฟล์ (jpg, png หรือ webp ไม่เกิน 4
+            MB)</p>
 
           <NuxtLink to="/orders" class="mt-3 inline-flex text-sm font-bold text-blue-700">ประวัติการสั่งซื้อ</NuxtLink>
         </div>
@@ -75,6 +81,23 @@
             <span v-if="highlightSchool" class="mt-1 block text-xs font-normal text-amber-700">กรอกชื่อโรงเรียน แล้วกด
               "บันทึกโปรไฟล์" ด้านล่าง</span>
           </label>
+          <label class="block text-sm font-semibold text-slate-700">
+            จังหวัดที่เรียน
+            <select v-model="form.school_province"
+              class="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              :class="form.school_province ? 'text-slate-800' : 'text-slate-400'">
+              <option value="">เลือกจังหวัดที่โรงเรียนตั้งอยู่</option>
+              <option v-for="province in thaiProvinces" :key="province" :value="province" class="text-slate-800">{{ province }}</option>
+            </select>
+          </label>
+
+          <div class="mt-2 border-t border-slate-100 pt-4 sm:col-span-2">
+            <h3 class="flex items-center gap-2 text-base font-extrabold text-slate-900">
+              <LearnIcon name="receipt" class="h-5 w-5 text-orange-500" />
+              ข้อมูลที่อยู่
+            </h3>
+            <p class="mt-1 text-xs text-slate-500">สำหรับระบุในใบเสร็จรับเงิน และใช้เป็นที่อยู่จัดส่งหนังสือเริ่มต้น</p>
+          </div>
           <label class="block text-sm font-semibold text-slate-700 sm:col-span-2">
             ที่อยู่
             <input v-model="form.address_line1"
@@ -196,6 +219,7 @@ const form = reactive({
   email: '',
   phone: '',
   school_name: '',
+  school_province: '',
   address_line1: '',
   subdistrict: '',
   district: '',
@@ -235,6 +259,7 @@ watch(user, (value) => {
   form.email = value.email
   form.phone = value.phone ?? ''
   form.school_name = value.school_name ?? ''
+  form.school_province = value.school_province ?? ''
   form.address_line1 = value.address?.address_line1 ?? ''
   form.subdistrict = value.address?.subdistrict ?? ''
   form.district = value.address?.district ?? ''
@@ -314,6 +339,7 @@ async function saveProfile() {
       email: form.email.trim(),
       phone: form.phone.trim() || null,
       school_name: form.school_name.trim() || null,
+      school_province: form.school_province || null,
       address_line1: form.address_line1.trim() || null,
       subdistrict: form.subdistrict.trim() || null,
       district: form.district.trim() || null,

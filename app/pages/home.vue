@@ -94,13 +94,25 @@
 
                   <div class="mt-auto flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
                     <button v-if="item.expires_at" type="button"
-                      class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition"
-                      :class="renewUrgent(item.expires_at)
-                        ? 'bg-rose-500 text-white shadow-sm shadow-rose-200 hover:bg-rose-600'
-                        : 'bg-white text-orange-600 ring-1 ring-orange-200 hover:bg-orange-50'"
+                      class="renew-btn group relative isolate inline-flex items-center gap-1.5 rounded-full py-1.5 pe-1.5 ps-3.5 text-sm font-bold text-white transition hover:-translate-y-0.5 active:scale-[0.97]"
+                      :class="{ 'renew-btn--urgent': renewUrgent(item.expires_at) }"
+                      :aria-label="`ต่ออายุ ${item.name} ราคาพิเศษ`"
                       @click="renewItem = item">
-                      <LearnIcon name="clock" class="h-4 w-4" />
-                      ต่ออายุ
+                      <span class="pointer-events-none absolute inset-0 rounded-full" aria-hidden="true"
+                        :class="renewUrgent(item.expires_at)
+                          ? 'bg-gradient-to-r from-rose-500 via-red-500 to-orange-500'
+                          : 'bg-gradient-to-r from-amber-400 via-orange-500 to-rose-500'" />
+                      <span class="pointer-events-none absolute inset-0 overflow-hidden rounded-full" aria-hidden="true">
+                        <span class="renew-shine absolute inset-y-0 -start-1/2 w-1/2" />
+                      </span>
+                      <span v-for="spark in RENEW_SPARKS" :key="spark.style" class="renew-spark pointer-events-none absolute text-xs"
+                        :style="spark.style" aria-hidden="true">✨</span>
+                      <LearnIcon name="clock" class="renew-clock relative h-4 w-4" />
+                      <span class="relative">ต่ออายุ</span>
+                      <span
+                        class="renew-tag relative rounded-full bg-yellow-300 px-2 py-0.5 text-[11px] font-extrabold text-rose-700 shadow-sm">
+                        ราคาพิเศษ
+                      </span>
                     </button>
                     <NuxtLink :to="item.to"
                       class="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:bg-orange-600">
@@ -283,4 +295,111 @@ function coverClass(kind: string) {
   if (kind === 'curriculum') return 'bg-sky-100 text-sky-600'
   return 'bg-blue-100 text-blue-600'
 }
+
+const RENEW_SPARKS = [
+  { style: 'top: -9px; inset-inline-start: 10%; --sd: 0s' },
+  { style: 'top: -7px; inset-inline-end: 18%; --sd: 0.7s' },
+  { style: 'bottom: -9px; inset-inline-start: 42%; --sd: 1.3s' },
+]
 </script>
+
+<style scoped>
+.renew-btn {
+  animation: renew-glow 2.2s ease-in-out infinite;
+}
+
+.renew-btn--urgent {
+  animation-duration: 1.2s;
+}
+
+.renew-btn::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: conic-gradient(from var(--renew-angle, 0deg), #fde047, #fb923c, #f43f5e, #a855f7, #fde047);
+  z-index: -1;
+  opacity: 0.85;
+  animation: renew-spin 3s linear infinite;
+}
+
+.renew-shine {
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.7), transparent);
+  transform: skewX(-20deg);
+  animation: renew-shine 2.6s ease-in-out infinite;
+}
+
+.renew-spark {
+  animation: renew-twinkle 2s ease-in-out var(--sd, 0s) infinite;
+}
+
+.renew-tag {
+  animation: renew-tag 2.2s ease-in-out infinite;
+}
+
+.renew-btn:hover .renew-clock {
+  animation: renew-tick 0.6s ease-in-out;
+}
+
+.renew-btn:hover .renew-tag {
+  animation: renew-wiggle 0.5s ease-in-out;
+}
+
+@property --renew-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes renew-spin {
+  to { --renew-angle: 360deg; }
+}
+
+@keyframes renew-glow {
+  0%, 100% { box-shadow: 0 4px 12px rgb(249 115 22 / 0.3); }
+  50% { box-shadow: 0 6px 22px rgb(244 63 94 / 0.55), 0 0 0 4px rgb(253 224 71 / 0.25); }
+}
+
+@keyframes renew-shine {
+  0% { inset-inline-start: -50%; }
+  45%, 100% { inset-inline-start: 130%; }
+}
+
+@keyframes renew-twinkle {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0); }
+  50% { opacity: 1; transform: scale(1.1) rotate(20deg); }
+}
+
+@keyframes renew-tag {
+  0%, 100% { transform: scale(1) rotate(0); }
+  50% { transform: scale(1.08) rotate(-3deg); }
+}
+
+@keyframes renew-wiggle {
+  0%, 100% { transform: rotate(0) scale(1.05); }
+  25% { transform: rotate(-8deg) scale(1.12); }
+  75% { transform: rotate(8deg) scale(1.12); }
+}
+
+@keyframes renew-tick {
+  0%, 100% { transform: rotate(0); }
+  50% { transform: rotate(-25deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .renew-btn,
+  .renew-btn::before,
+  .renew-shine,
+  .renew-spark,
+  .renew-tag,
+  .renew-btn:hover .renew-clock,
+  .renew-btn:hover .renew-tag {
+    animation: none;
+  }
+
+  .renew-shine,
+  .renew-spark {
+    display: none;
+  }
+}
+</style>

@@ -3,51 +3,53 @@
     <HomeBannerSlider :banners="banners" :pending="pending" />
 
     <section class="mx-auto grid max-w-6xl items-center gap-8 px-4 py-10 md:grid-cols-2 md:px-6 md:py-16">
-      <div>
-        <p class="mb-3 text-sm font-bold text-blue-600">คอร์สเรียนออนไลน์สำหรับเด็ก</p>
+      <div class="relative">
+        <span v-for="deco in HERO_DECOS" :key="deco.icon" class="hx-deco pointer-events-none absolute hidden text-2xl md:block" :style="deco.style" aria-hidden="true">{{ deco.icon }}</span>
+
+        <p class="hx-rise mb-3 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-sm font-bold text-blue-600 ring-1 ring-blue-100" style="--d: 0.05s">
+          <span class="hx-ping relative flex h-2 w-2" aria-hidden="true">
+            <span class="absolute inline-flex h-full w-full rounded-full bg-blue-400" />
+            <span class="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+          </span>
+          คอร์สเรียนออนไลน์สำหรับเด็ก
+        </p>
         <h1 class="text-4xl font-extrabold leading-tight text-slate-900 md:text-5xl">
-          เรียนสนุก เข้าใจง่าย<br>
-          <span class="text-blue-600">เก่งขึ้นได้ทุกวัน!</span>
+          <span class="hx-rise me-3 inline-block" style="--d: 0.15s">เรียนสนุก</span>
+          <span class="hx-rise inline-block" style="--d: 0.3s">เข้าใจง่าย</span><br>
+          <span class="hx-pop inline-block bg-gradient-to-r from-blue-600 via-sky-400 to-orange-500 bg-clip-text text-transparent" style="--d: 0.5s">เก่งขึ้นได้ทุกวัน!</span>
         </h1>
-        <p class="mt-4 max-w-md text-base text-slate-600">
+        <p class="hx-rise mt-4 max-w-md text-base text-slate-600" style="--d: 0.65s">
           คอร์สเรียนออนไลน์สำหรับเด็กประถม เข้าใจง่าย เรียนได้ทุกที่ ทุกเวลา
         </p>
-        <div class="mt-6 flex flex-wrap gap-3">
+        <div class="hx-rise mt-6 flex flex-wrap gap-3" style="--d: 0.8s">
           <NuxtLink to="/signup"
-            class="inline-flex items-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:bg-orange-600">
-            <LearnIcon name="play" class="h-4 w-4" />
+            class="hx-cta group relative inline-flex items-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-orange-500 to-rose-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:-translate-y-0.5 hover:shadow-lg hover:shadow-orange-300 active:scale-[0.98]">
+            <span class="hx-cta-shine pointer-events-none absolute inset-y-0 -start-1/3 w-1/3" aria-hidden="true" />
+            <span class="hx-play flex h-5 w-5 items-center justify-center rounded-full bg-white/25">
+              <LearnIcon name="play" class="h-3.5 w-3.5" />
+            </span>
             เริ่มเรียนกันเลย!
           </NuxtLink>
           <NuxtLink to="/signin"
-            class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-bold text-blue-700 transition hover:-translate-y-0.5 hover:bg-blue-50">
-            <LearnIcon name="login" class="h-4 w-4" />
+            class="group inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-bold text-blue-700 transition hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50">
+            <LearnIcon name="login" class="h-4 w-4 transition group-hover:translate-x-0.5" />
             เข้าสู่ระบบ
           </NuxtLink>
         </div>
       </div>
-      <NuxtLink
-        :to="loggedIn ? '/home' : { path: '/signin', query: { redirect: '/home' } }"
-        class="group block rounded-[2rem] bg-gradient-to-br from-sky-100 via-white to-blue-100 p-8 text-center shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-lg hover:ring-blue-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300"
-      >
-        <p class="text-6xl transition group-hover:scale-110" aria-hidden="true">📚</p>
+      <NuxtLink :to="loggedIn ? '/home' : { path: '/signin', query: { redirect: '/home' } }"
+        class="group block rounded-[2rem] bg-gradient-to-br from-sky-100 via-white to-blue-100 p-8 text-center shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-1 hover:shadow-lg hover:ring-blue-300 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-blue-300">
+        <img src="/images/icon/clickclass-icon-01.webp" alt="" width="480" height="480" loading="lazy" decoding="async"
+          class="mx-auto h-40 w-40 object-contain drop-shadow-md transition duration-300 group-hover:-translate-y-1 group-hover:scale-105 sm:h-48 sm:w-48">
         <p class="mt-3 text-lg font-bold text-blue-800">เข้าห้องเรียน</p>
-        <p class="mt-1 text-sm text-slate-500">{{ loggedIn ? 'เรียนต่อจากที่ค้างไว้ได้เลย' : 'เข้าห้องเรียนได้หลังเข้าสู่ระบบ' }}</p>
-        <span class="mt-4 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-200 transition group-hover:bg-blue-700">
+        <p class="mt-1 text-sm text-slate-500">{{ loggedIn ? 'เรียนต่อจากที่ค้างไว้ได้เลย' :
+          'เข้าห้องเรียนได้หลังเข้าสู่ระบบ' }}</p>
+        <span
+          class="mt-4 inline-flex items-center gap-2 rounded-full bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-blue-200 transition group-hover:bg-blue-700">
           <LearnIcon :name="loggedIn ? 'classroom' : 'login'" class="h-4 w-4" />
           {{ loggedIn ? 'ไปที่ห้องเรียน' : 'เข้าสู่ระบบเพื่อเข้าเรียน' }}
           <LearnIcon name="arrow" class="h-4 w-4 transition group-hover:translate-x-0.5" />
         </span>
-      </NuxtLink>
-    </section>
-
-    <section id="subjects" class="mx-auto grid max-w-6xl grid-cols-2 gap-3 px-4 sm:grid-cols-4 md:px-6">
-      <NuxtLink v-for="item in highlights" :key="item.label" :to="item.to"
-        class="rounded-3xl bg-white p-4 text-center shadow-sm ring-1 ring-blue-50 transition hover:-translate-y-0.5 hover:shadow-md">
-        <span class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl" :class="item.chip">
-          <LearnIcon :name="item.icon" class="h-6 w-6" />
-        </span>
-        <span class="mt-2 block text-sm font-bold text-slate-700">{{ item.label }}</span>
-        <span class="block text-xs text-slate-400">{{ item.caption }}</span>
       </NuxtLink>
     </section>
 
@@ -158,11 +160,99 @@ function publishedLabel(value: string) {
   return new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium' }).format(date)
 }
 
-const highlights = [
-  { label: 'คอร์สเรียน', caption: 'คอร์สและหลักสูตร', icon: 'course' as const, chip: 'bg-blue-100 text-blue-600', to: '/courses' },
-  { label: 'ข้อสอบ', caption: 'ข้อสอบแยกชุด', icon: 'exam' as const, chip: 'bg-amber-100 text-amber-600', to: '/exams' },
-  { label: 'หนังสือ', caption: 'อ่านเสริมเพิ่ม', icon: 'book' as const, chip: 'bg-orange-100 text-orange-600', to: '/books' },
-  { label: 'ติดต่อเรา', caption: 'สอบถามการสั่งซื้อ', icon: 'contact' as const, chip: 'bg-emerald-100 text-emerald-600', to: '/contact' },
+const HERO_DECOS = [
+  { icon: '✏️', style: 'top: -18px; inset-inline-end: 12%; --fd: 0s' },
+  { icon: '⭐', style: 'top: 34%; inset-inline-end: 2%; --fd: 1.2s' },
+  { icon: '📚', style: 'bottom: -8px; inset-inline-end: 22%; --fd: 2.1s' },
 ]
-
 </script>
+
+<style scoped>
+.hx-rise {
+  animation: hx-rise 0.7s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0s) both;
+}
+
+.hx-pop {
+  animation:
+    hx-pop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) var(--d, 0s) both,
+    hx-shimmer 4s linear calc(var(--d, 0s) + 0.8s) infinite;
+  background-size: 200% auto;
+}
+
+.hx-ping > span:first-child {
+  animation: hx-ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.hx-deco {
+  animation: hx-bob 4s ease-in-out var(--fd, 0s) infinite;
+}
+
+.hx-cta {
+  animation: hx-glow 2.6s ease-in-out 1.6s infinite;
+}
+
+.hx-cta-shine {
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.55), transparent);
+  transform: skewX(-20deg);
+  animation: hx-shine 3.4s ease-in-out 1.8s infinite;
+}
+
+.hx-play {
+  animation: hx-pulse 1.8s ease-in-out 1.4s infinite;
+}
+
+@keyframes hx-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes hx-pop {
+  0% { opacity: 0; transform: translateY(14px) scale(0.85); }
+  100% { opacity: 1; transform: none; }
+}
+
+@keyframes hx-shimmer {
+  to { background-position: 200% center; }
+}
+
+@keyframes hx-ping {
+  75%, 100% { opacity: 0; transform: scale(2.4); }
+}
+
+@keyframes hx-bob {
+  0%, 100% { opacity: 0.55; transform: translateY(0) rotate(-6deg); }
+  50% { opacity: 1; transform: translateY(-10px) rotate(8deg); }
+}
+
+@keyframes hx-glow {
+  0%, 100% { box-shadow: 0 4px 14px rgb(249 115 22 / 0.25); }
+  50% { box-shadow: 0 6px 26px rgb(244 63 94 / 0.45); }
+}
+
+@keyframes hx-shine {
+  0% { inset-inline-start: -33%; }
+  40%, 100% { inset-inline-start: 120%; }
+}
+
+@keyframes hx-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hx-rise,
+  .hx-pop,
+  .hx-ping > span:first-child,
+  .hx-deco,
+  .hx-cta,
+  .hx-cta-shine,
+  .hx-play {
+    animation: none;
+  }
+
+  .hx-deco,
+  .hx-cta-shine {
+    display: none;
+  }
+}
+</style>
