@@ -12,15 +12,33 @@
         <img v-if="article.image_url" :src="article.image_url" :alt="article.title" class="mt-5 w-full rounded-3xl object-cover">
         <div v-if="article.content" class="article-content mt-6 space-y-3 text-sm leading-7 text-slate-700" v-html="article.content" />
 
-        <section v-if="related.length" class="mt-10" aria-labelledby="related-title">
-          <h2 id="related-title" class="text-2xl font-extrabold text-slate-900">คอร์สเรียนที่เกี่ยวข้อง</h2>
-          <p class="mt-1 text-sm text-slate-500">คอร์ส หลักสูตร และข้อสอบที่เกี่ยวกับบทความนี้</p>
-          <div class="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2">
+        <section v-if="related.length" class="mt-10" aria-labelledby="related-title" aria-roledescription="carousel"
+          @mouseenter="hovering = true" @mouseleave="hovering = false" @focusin="hovering = true" @focusout="hovering = false">
+          <div class="flex items-end justify-between gap-3">
+            <div>
+              <h2 id="related-title" class="text-2xl font-extrabold text-slate-900">คอร์สเรียนที่เกี่ยวข้อง</h2>
+              <p class="mt-1 text-sm text-slate-500">คอร์ส หลักสูตร และข้อสอบที่เกี่ยวกับบทความนี้</p>
+            </div>
+            <div v-if="canSlide" class="flex shrink-0 gap-2">
+              <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-blue-50 hover:text-blue-700"
+                aria-label="ก่อนหน้า" @click="step(-1)">
+                <LearnIcon name="arrow" class="h-4 w-4 rotate-180" />
+              </button>
+              <button type="button" class="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-600 shadow-sm ring-1 ring-slate-200 transition hover:bg-blue-50 hover:text-blue-700"
+                aria-label="ถัดไป" @click="step(1)">
+                <LearnIcon name="arrow" class="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+          <div ref="trackEl"
+            class="related-track -mx-1 mt-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth px-1 pb-2"
+            @scroll.passive="onTrackScroll" @touchstart.passive="touching = true" @touchend.passive="touching = false">
             <NuxtLink
-              v-for="item in related"
+              v-for="(item, index) in related"
               :key="`${item.kind}-${item.id}`"
               :to="item.to"
-              class="group overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md"
+              :aria-label="`${index + 1} จาก ${related.length}: ${item.name}`"
+              class="group w-[85%] shrink-0 snap-start overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:shadow-md sm:w-[calc(50%-0.5rem)] md:w-[85%] lg:w-[calc(50%-0.5rem)]"
             >
               <div class="relative aspect-video bg-gradient-to-br from-sky-100 to-blue-50">
                 <img v-if="item.thumbnail_url" :src="item.thumbnail_url" :alt="item.name" class="h-full w-full object-cover">
@@ -35,6 +53,12 @@
                 </span>
               </div>
             </NuxtLink>
+          </div>
+          <div v-if="canSlide" class="mt-3 flex justify-center gap-1.5">
+            <button v-for="(item, index) in related" :key="`dot-${item.kind}-${item.id}`" type="button"
+              class="h-2 rounded-full transition-all"
+              :class="index === activeIndex ? 'w-6 bg-blue-600' : 'w-2 bg-slate-300 hover:bg-slate-400'"
+              :aria-label="`ไปที่รายการที่ ${index + 1}`" :aria-current="index === activeIndex" @click="goTo(index)" />
           </div>
         </section>
       </article>
@@ -132,6 +156,87 @@ const related = computed(() => {
   ]
 })
 
+const AUTO_SLIDE_MS = 4000
+const trackEl = ref<HTMLElement | null>(null)
+const activeIndex = ref(0)
+const canSlide = ref(false)
+const hovering = ref(false)
+const touching = ref(false)
+let slideTimer: ReturnType<typeof setInterval> | undefined
+
+/** ระยะเลื่อนต่อการ์ดหนึ่งใบ (ความกว้างการ์ด + ช่องว่าง) */
+function cardStep() {
+  const track = trackEl.value
+  const first = track?.children[0] as HTMLElement | undefined
+  if (!track || !first) return 0
+  const second = track.children[1] as HTMLElement | undefined
+  return second ? second.offsetLeft - first.offsetLeft : first.offsetWidth
+}
+
+function measure() {
+  const track = trackEl.value
+  canSlide.value = Boolean(track && track.scrollWidth - track.clientWidth > 4)
+}
+
+function goTo(index: number) {
+  const track = trackEl.value
+  if (!track) return
+  const count = related.value.length
+  const target = ((index % count) + count) % count
+  const maxScroll = track.scrollWidth - track.clientWidth
+  track.scrollTo({ left: Math.min(target * cardStep(), maxScroll) })
+  activeIndex.value = target
+}
+
+function step(direction: 1 | -1) {
+  const track = trackEl.value
+  if (!track) return
+  const atEnd = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4
+  if (direction === 1 && atEnd) return goTo(0)
+  if (direction === -1 && track.scrollLeft <= 4) return goTo(related.value.length - 1)
+  goTo(activeIndex.value + direction)
+}
+
+function onTrackScroll() {
+  const track = trackEl.value
+  const size = cardStep()
+  if (!track || !size) return
+  const atEnd = track.scrollLeft >= track.scrollWidth - track.clientWidth - 4
+  activeIndex.value = atEnd ? related.value.length - 1 : Math.round(track.scrollLeft / size)
+}
+
+function stopAutoSlide() {
+  clearInterval(slideTimer)
+  slideTimer = undefined
+}
+
+function startAutoSlide() {
+  stopAutoSlide()
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+  slideTimer = setInterval(() => {
+    if (!canSlide.value || hovering.value || touching.value || document.hidden) return
+    step(1)
+  }, AUTO_SLIDE_MS)
+}
+
+watch(related, async () => {
+  activeIndex.value = 0
+  await nextTick()
+  trackEl.value?.scrollTo({ left: 0 })
+  measure()
+})
+
+onMounted(() => {
+  window.addEventListener('resize', measure)
+  nextTick(measure)
+  startAutoSlide()
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', measure)
+  stopAutoSlide()
+})
+
 function publishedLabel(value: string) {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return value
@@ -185,5 +290,19 @@ useSeoMeta({
   max-width: 100%;
   height: auto;
   border-radius: 1rem;
+}
+
+.related-track {
+  scrollbar-width: none;
+}
+
+.related-track::-webkit-scrollbar {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .related-track {
+    scroll-behavior: auto;
+  }
 }
 </style>
