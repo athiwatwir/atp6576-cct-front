@@ -16,7 +16,7 @@
           <p v-if="applied.description" class="mt-0.5 text-xs text-emerald-700">{{ applied.description }}</p>
           <p v-if="applied.auto" class="mt-1 inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-emerald-700 ring-1 ring-emerald-200">
             <LearnIcon name="clock" class="h-3 w-3" />
-            ส่วนลดต่ออายุ ใช้ให้อัตโนมัติ
+            โปรโมชัน ใช้ให้อัตโนมัติ
           </p>
         </div>
         <button type="button" class="shrink-0 text-xs font-bold text-rose-600 hover:underline disabled:opacity-50" :disabled="pending" @click="emit('remove')">

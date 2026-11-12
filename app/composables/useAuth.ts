@@ -6,12 +6,22 @@ export interface StudentAddress {
   postal_code?: string | null
 }
 
+export interface CourseProgress {
+  percent: number
+  completed_items: number
+  total_items: number
+  completed_at: string | null
+  last_activity_at: string | null
+}
+
 export interface LearningItem {
   id: number
   name: string
   slug: string
   thumbnail_url?: string | null
   expires_at?: string | null
+  /** เฉพาะวิชา null = ยังไม่เคยดูคลิป */
+  progress?: CourseProgress | null
 }
 
 export interface ClassroomItem extends LearningItem {

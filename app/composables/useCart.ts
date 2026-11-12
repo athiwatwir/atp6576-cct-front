@@ -57,7 +57,7 @@ export interface AppliedCoupon {
   code: string
   description: string | null
   gifts: CouponGift[]
-  /** ระบบใส่คูปองต่ออายุให้เอง (ลูกค้าไม่ได้กรอกโค้ด) */
+  /** ระบบใส่คูปองต่ออายุหรือโปรโมชันของแถมให้เอง (ลูกค้าไม่ได้กรอกโค้ด) */
   auto?: boolean
 }
 

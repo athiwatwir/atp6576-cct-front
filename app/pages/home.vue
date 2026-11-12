@@ -5,28 +5,35 @@
     <PageLoading v-if="!user" message="กำลังโหลดห้องเรียน..." />
 
     <template v-else>
-      <div v-if="expiringSoon.length" class="flex flex-wrap items-center gap-3 rounded-3xl bg-gradient-to-r from-rose-50 to-amber-50 p-4 ring-1 ring-rose-100">
-        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm" aria-hidden="true">⏰</span>
+      <div v-if="expiringSoon.length"
+        class="flex flex-wrap items-center gap-3 rounded-3xl bg-gradient-to-r from-rose-50 to-amber-50 p-4 ring-1 ring-rose-100">
+        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm"
+          aria-hidden="true">⏰</span>
         <p class="min-w-0 flex-1 text-sm text-slate-700">
           <span class="block font-extrabold text-rose-700">อย่าลืมเรียนให้ทันก่อนหมดสิทธิ์นะ</span>
-          {{ expiringSoon.map(item => `${item.name} (${expiry(item.expires_at).headline})`).join(' · ') }}
+          {{expiringSoon.map(item => `${item.name} (${expiry(item.expires_at).headline})`).join(' · ')}}
         </p>
-        <NuxtLink :to="expiringSoon[0]!.to" class="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rose-200 hover:bg-rose-600">
+        <NuxtLink :to="expiringSoon[0]!.to"
+          class="inline-flex items-center gap-1.5 rounded-full bg-rose-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-rose-200 hover:bg-rose-600">
           <LearnIcon name="play" class="h-4 w-4" />
           ไปเรียนเลย
         </NuxtLink>
       </div>
 
-      <section v-if="!classroom.items.length" class="flex flex-col items-center gap-3 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-100">
+      <section v-if="!classroom.items.length"
+        class="flex flex-col items-center gap-3 rounded-3xl bg-white p-8 text-center shadow-sm ring-1 ring-slate-100">
         <span class="text-5xl" aria-hidden="true">🎒</span>
         <p class="text-lg font-extrabold text-slate-900">กระเป๋าเรียนยังว่างอยู่เลย</p>
-        <p class="max-w-md text-sm text-slate-500">เลือกคอร์สที่ชอบได้เลย เมื่อชำระเงินสำเร็จ คอร์สจะมาอยู่ที่นี่ให้เริ่มเรียนได้ทันที</p>
+        <p class="max-w-md text-sm text-slate-500">เลือกคอร์สที่ชอบได้เลย เมื่อชำระเงินสำเร็จ
+          คอร์สจะมาอยู่ที่นี่ให้เริ่มเรียนได้ทันที</p>
         <div class="mt-2 flex flex-wrap justify-center gap-2">
-          <NuxtLink to="/courses" class="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-200 hover:bg-orange-600">
+          <NuxtLink to="/courses"
+            class="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-orange-200 hover:bg-orange-600">
             <LearnIcon name="course" class="h-4 w-4" />
             ดูคอร์สเรียน
           </NuxtLink>
-          <NuxtLink to="/demo" class="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-purple-700 ring-1 ring-purple-200 hover:bg-purple-50">
+          <NuxtLink to="/demo"
+            class="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-purple-700 ring-1 ring-purple-200 hover:bg-purple-50">
             <LearnIcon name="play" class="h-4 w-4" />
             ลองเรียนฟรีก่อน
           </NuxtLink>
@@ -34,55 +41,69 @@
       </section>
 
       <template v-else>
-        <section v-for="group in groups" :key="group.kind" class="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-100 md:p-6">
+        <section v-for="group in groups" :key="group.kind"
+          class="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-slate-100 md:p-6">
           <div class="flex items-center gap-3">
-            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl" :class="group.chip" aria-hidden="true">{{ group.emoji }}</span>
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-2xl" :class="group.chip"
+              aria-hidden="true">{{ group.emoji }}</span>
             <div class="min-w-0">
               <h2 class="text-xl font-extrabold text-slate-900">{{ group.title }}</h2>
               <p class="text-sm text-slate-500">{{ group.items.length ? group.subtitle : group.empty }}</p>
             </div>
-            <span v-if="group.items.length" class="ms-auto shrink-0 rounded-full px-3 py-1 text-sm font-extrabold" :class="group.chip">{{ group.items.length }}</span>
+            <span v-if="group.items.length" class="ms-auto shrink-0 rounded-full px-3 py-1 text-sm font-extrabold"
+              :class="group.chip">{{ group.items.length }}</span>
           </div>
 
-          <ul v-if="group.items.length" class="mt-5 grid gap-4 sm:grid-cols-2" :class="{ 'lg:grid-cols-3': group.kind !== 'learning' }">
+          <ul v-if="group.items.length" class="mt-5 grid gap-4 sm:grid-cols-2"
+            :class="{ 'lg:grid-cols-3': group.kind !== 'learning' }">
             <li v-for="item in group.items" :key="`${item.kind}-${item.id}`">
-              <article class="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-lg hover:ring-orange-200">
-                <NuxtLink :to="item.to" class="relative block aspect-video w-full overflow-hidden" :class="coverClass(item.kind)">
-                  <img v-if="item.thumbnail_url" :src="item.thumbnail_url" :alt="item.name" class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
-                  <LearnIcon v-else :name="item.kind === 'exam' ? 'exam' : 'course'" class="absolute inset-0 m-auto h-12 w-12" />
-                  <span class="absolute start-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm">{{ item.kindLabel }}</span>
-                  <span class="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/20 group-hover:opacity-100" aria-hidden="true">
-                    <span class="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-orange-500 shadow-lg">
+              <article
+                class="group flex h-full flex-col overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-1 hover:shadow-lg hover:ring-orange-200">
+                <NuxtLink :to="item.to" class="relative block aspect-video w-full overflow-hidden"
+                  :class="coverClass(item.kind)">
+                  <img v-if="item.thumbnail_url" :src="item.thumbnail_url" :alt="item.name"
+                    class="h-full w-full object-cover transition duration-300 group-hover:scale-105">
+                  <LearnIcon v-else :name="item.kind === 'exam' ? 'exam' : 'course'"
+                    class="absolute inset-0 m-auto h-12 w-12" />
+                  <span
+                    class="absolute start-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-xs font-bold text-slate-700 shadow-sm">{{
+                    item.kindLabel }}</span>
+                  <span
+                    class="absolute inset-0 flex items-center justify-center bg-slate-900/0 opacity-0 transition group-hover:bg-slate-900/20 group-hover:opacity-100"
+                    aria-hidden="true">
+                    <span
+                      class="flex h-14 w-14 items-center justify-center rounded-full bg-white/95 text-orange-500 shadow-lg">
                       <LearnIcon :name="item.kind === 'exam' ? 'exam' : 'play'" class="h-7 w-7" />
                     </span>
                   </span>
                 </NuxtLink>
 
                 <div class="flex flex-1 flex-col gap-3 p-4">
-                  <NuxtLink :to="item.to" class="block font-bold leading-snug text-slate-900 hover:text-orange-600">{{ item.name }}</NuxtLink>
+                  <NuxtLink :to="item.to" class="block font-bold leading-snug text-slate-900 hover:text-orange-600">{{
+                    item.name }}</NuxtLink>
 
-                  <span class="inline-flex items-center gap-2 self-start rounded-xl px-3 py-1.5" :class="expiry(item.expires_at).tone">
+                  <span class="inline-flex items-center gap-2 self-start rounded-xl px-3 py-1.5"
+                    :class="expiry(item.expires_at).tone">
                     <LearnIcon :name="item.expires_at ? 'clock' : 'infinity'" class="h-5 w-5 shrink-0" />
                     <span class="leading-tight">
                       <span class="block text-sm font-extrabold">{{ expiry(item.expires_at).headline }}</span>
-                      <span v-if="item.expires_at" class="block text-[11px] font-semibold opacity-80">ใช้ได้ถึง {{ formatThaiDate(item.expires_at) }}</span>
+                      <span v-if="item.expires_at" class="block text-[11px] font-semibold opacity-80">ใช้ได้ถึง {{
+                        formatThaiDate(item.expires_at) }}</span>
                     </span>
                   </span>
 
                   <div class="mt-auto flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 pt-3">
-                    <button
-                      v-if="item.expires_at"
-                      type="button"
+                    <button v-if="item.expires_at" type="button"
                       class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-bold transition"
                       :class="renewUrgent(item.expires_at)
                         ? 'bg-rose-500 text-white shadow-sm shadow-rose-200 hover:bg-rose-600'
                         : 'bg-white text-orange-600 ring-1 ring-orange-200 hover:bg-orange-50'"
-                      @click="renewItem = item"
-                    >
+                      @click="renewItem = item">
                       <LearnIcon name="clock" class="h-4 w-4" />
                       ต่ออายุ
                     </button>
-                    <NuxtLink :to="item.to" class="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:bg-orange-600">
+                    <NuxtLink :to="item.to"
+                      class="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white shadow-sm shadow-orange-200 transition hover:bg-orange-600">
                       <LearnIcon :name="item.kind === 'exam' ? 'exam' : 'play'" class="h-4 w-4" />
                       {{ item.kind === 'exam' ? 'เข้าสอบ' : 'เข้าเรียน' }}
                     </NuxtLink>
@@ -95,8 +116,10 @@
       </template>
 
       <section class="grid gap-3 sm:grid-cols-3">
-        <div v-for="tip in tips" :key="tip.title" class="flex items-start gap-3 rounded-3xl p-4 ring-1" :class="tip.tone">
-          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm" aria-hidden="true">{{ tip.emoji }}</span>
+        <div v-for="tip in tips" :key="tip.title" class="flex items-start gap-3 rounded-3xl p-4 ring-1"
+          :class="tip.tone">
+          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-white text-2xl shadow-sm"
+            aria-hidden="true">{{ tip.emoji }}</span>
           <span>
             <span class="block text-sm font-extrabold text-slate-800">{{ tip.title }}</span>
             <span class="mt-0.5 block text-xs leading-relaxed text-slate-600">{{ tip.text }}</span>
@@ -104,19 +127,13 @@
         </div>
       </section>
 
-      <section v-if="recommendPending || recommended.length" class="rounded-[2rem] bg-gradient-to-br from-sky-50 via-white to-orange-50 p-5 ring-1 ring-sky-100 md:p-6">
-        <CatalogGrid
-          title="คอร์สเรียนที่แนะนำ"
-          :description="recommendReason"
-          :items="recommended"
-          :pending="recommendPending"
-          heading="h2"
-          purchasable
-          icon="course"
-          chip="bg-orange-100 text-orange-600"
-        />
+      <section v-if="recommendPending || recommended.length"
+        class="rounded-[2rem] bg-gradient-to-br from-sky-50 via-white to-orange-50 p-5 ring-1 ring-sky-100 md:p-6">
+        <CatalogGrid title="คอร์สเรียนที่แนะนำ" :description="recommendReason" :items="recommended"
+          :pending="recommendPending" heading="h2" purchasable icon="course" chip="bg-orange-100 text-orange-600" />
         <div class="mt-5 text-center">
-          <NuxtLink to="/courses" class="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-50">
+          <NuxtLink to="/courses"
+            class="inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2.5 text-sm font-bold text-blue-700 shadow-sm ring-1 ring-blue-100 transition hover:-translate-y-0.5 hover:bg-blue-50">
             ดูคอร์สทั้งหมด
             <LearnIcon name="arrow" class="h-4 w-4" />
           </NuxtLink>
@@ -188,7 +205,7 @@ const groups = computed(() => [
     kind: 'learning',
     emoji: '📚',
     chip: 'bg-blue-50 text-blue-700',
-    title: 'คอร์สของฉัน',
+    title: 'คอร์สเรียนของฉัน',
     subtitle: 'กดที่คอร์สเพื่อเรียนต่อจากที่ค้างไว้',
     empty: 'ยังไม่มีคอร์สหรือหลักสูตรที่เปิดสิทธิ์',
     items: learningItems.value,

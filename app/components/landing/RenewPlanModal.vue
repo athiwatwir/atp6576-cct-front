@@ -1,14 +1,22 @@
 <template>
   <Teleport to="body">
-    <div class="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-4" @click.self="emit('close')">
-      <div role="dialog" aria-modal="true" aria-labelledby="renew-title" class="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
+    <div class="fixed inset-0 z-[60] flex items-end justify-center bg-slate-900/50 sm:items-center sm:p-4"
+      @click.self="emit('close')">
+      <div role="dialog" aria-modal="true" aria-labelledby="renew-title"
+        class="flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-white shadow-2xl sm:rounded-3xl">
         <header class="relative shrink-0 bg-gradient-to-br from-orange-400 to-rose-500 px-5 pb-5 pt-4 text-white">
-          <button type="button" class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 hover:bg-white/30" aria-label="ปิด" @click="emit('close')">
-            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+          <button type="button"
+            class="absolute end-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/20 hover:bg-white/30"
+            aria-label="ปิด" @click="emit('close')">
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.2"
+              stroke-linecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6 6 18" />
+            </svg>
           </button>
           <p class="text-xs font-bold text-white/80">ต่ออายุ{{ kindLabel }}</p>
           <h2 id="renew-title" class="mt-1 pe-10 text-lg font-extrabold leading-snug">{{ item.name }}</h2>
-          <p v-if="item.expires_at" class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
+          <p v-if="item.expires_at"
+            class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
             <LearnIcon name="clock" class="h-3.5 w-3.5" />
             สิทธิ์เดิมถึง {{ formatThaiDate(item.expires_at) }}
           </p>
@@ -16,41 +24,74 @@
 
         <div class="min-h-0 flex-1 overflow-y-auto p-5">
           <div v-if="pending" class="flex flex-col items-center gap-3 py-10 text-sm font-semibold text-slate-500">
-            <span class="h-10 w-10 animate-spin rounded-full border-4 border-orange-100 border-t-orange-500" aria-hidden="true" />
+            <span class="h-10 w-10 animate-spin rounded-full border-4 border-orange-100 border-t-orange-500"
+              aria-hidden="true" />
             กำลังโหลดแพ็กเกจ...
           </div>
           <p v-else-if="error" class="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{{ error }}</p>
-          <p v-else-if="!plans.length" class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">ตอนนี้ยังไม่มีแพ็กเกจให้ต่ออายุ กรุณาติดต่อทีมงาน</p>
+          <p v-else-if="!plans.length" class="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            ตอนนี้ยังไม่มีแพ็กเกจให้ต่ออายุ กรุณาติดต่อทีมงาน</p>
 
           <template v-else>
             <p class="text-sm font-bold text-slate-700">เลือกแพ็กเกจต่ออายุ</p>
             <div class="mt-2 grid gap-2" role="radiogroup" aria-label="แพ็กเกจต่ออายุ">
-              <label
-                v-for="plan in plans"
-                :key="plan.id"
+              <label v-for="plan in plans" :key="plan.id"
                 class="flex cursor-pointer items-center gap-3 rounded-2xl border px-4 py-3 transition"
-                :class="plan.id === planId ? 'border-orange-400 bg-orange-50 ring-2 ring-orange-100' : 'border-slate-200 hover:border-orange-200'"
-              >
-                <input v-model="planId" type="radio" :value="plan.id" name="renew-plan" class="h-4 w-4 accent-orange-500">
+                :class="plan.id === planId ? 'border-orange-400 bg-orange-50 ring-2 ring-orange-100' : 'border-slate-200 hover:border-orange-200'">
+                <input v-model="planId" type="radio" :value="plan.id" name="renew-plan"
+                  class="h-4 w-4 accent-orange-500">
                 <span class="min-w-0 flex-1">
                   <span class="block font-bold text-slate-800">{{ plan.name }}</span>
                   <span class="block text-xs text-slate-500">{{ planDurationLabel(plan) }}</span>
                 </span>
                 <span class="text-end">
-                  <span v-if="plan.sale_price && plan.sale_price < plan.price" class="block text-xs text-slate-400 line-through">{{ formatBaht(plan.price) }}</span>
+                  <span v-if="plan.sale_price && plan.sale_price < plan.price"
+                    class="block text-xs text-slate-400 line-through">{{ formatBaht(plan.price) }}</span>
                   <span class="block font-extrabold text-orange-600">{{ formatBaht(plan.effective_price) }}</span>
                 </span>
               </label>
             </div>
-            <div v-if="renewalCoupon" class="mt-3 flex items-start gap-2.5 rounded-2xl bg-orange-50 px-4 py-3 text-sm text-orange-800 ring-1 ring-orange-100">
-              <span class="text-lg leading-none" aria-hidden="true">🎉</span>
-              <p>
-                <span class="block font-extrabold">ส่วนลดต่ออายุ ลด {{ formatBaht(renewalCoupon.discount) }}</span>
-                <span class="block text-xs text-orange-700">
-                  ใช้โค้ด <span class="font-mono font-bold">{{ renewalCoupon.code }}</span> ให้อัตโนมัติ<template v-if="renewalCoupon.description"> · {{ renewalCoupon.description }}</template>
-                </span>
-              </p>
-            </div>
+            <Transition name="deal">
+              <div v-if="renewalCoupon" :key="`${planId}-${renewalCoupon.code}`"
+                class="deal-card relative mt-3 flex overflow-hidden rounded-2xl shadow-md shadow-orange-200/70"
+                role="note" :aria-label="`คูปองต่ออายุ ${renewalCoupon.code} ลด ${formatBaht(renewalCoupon.discount)}`">
+                <span class="deal-shine pointer-events-none absolute inset-y-0 -start-1/2 z-10 w-1/2"
+                  aria-hidden="true" />
+
+                <div
+                  class="relative flex w-28 shrink-0 flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-rose-500 px-2 py-3 text-center text-white">
+                  <span class="relative flex h-6 w-6 items-center justify-center" aria-hidden="true">
+
+                    <span v-for="dot in CONFETTI" :key="dot.color"
+                      class="deal-confetti absolute h-1.5 w-1.5 rounded-full" :class="dot.color"
+                      :style="{ '--x': dot.x, '--y': dot.y }" />
+                  </span>
+                  <span class="mt-0.5 text-[10px] font-bold tracking-widest text-white/80">ส่วนลด</span>
+                  <span class="deal-amount text-2xl font-black leading-tight">{{ formatBaht(renewalCoupon.discount)
+                    }}</span>
+                  <span class="text-[10px] font-bold text-white/80">เมื่อต่ออายุ</span>
+                </div>
+
+                <div class="relative w-0 shrink-0 border-s-2 border-dashed border-orange-300" aria-hidden="true">
+                  <span class="absolute -top-2 -start-2 h-4 w-4 rounded-full bg-white" />
+                  <span class="absolute -bottom-2 -start-2 h-4 w-4 rounded-full bg-white" />
+                </div>
+
+                <div class="min-w-0 flex-1 bg-gradient-to-br from-orange-50 to-amber-50 px-4 py-3">
+                  <p class="flex items-center gap-1 text-[11px] font-extrabold text-emerald-600">
+                    <LearnIcon name="check" class="h-3.5 w-3.5" />
+                    ใช้ให้อัตโนมัติแล้ว
+                  </p>
+                  <p
+                    class="mt-1 inline-block rounded-lg border-2 border-dashed border-orange-400 bg-white px-2.5 py-0.5 font-mono text-lg font-black tracking-[0.2em] text-orange-600">
+                    {{ renewalCoupon.code }}
+                  </p>
+                  <p class="mt-1 text-xs font-semibold text-orange-800">
+                    {{ renewalCoupon.description || 'คูปองส่วนลดสำหรับการต่ออายุ' }}
+                  </p>
+                </div>
+              </div>
+            </Transition>
             <p v-if="newExpiry" class="mt-3 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
               ชำระแล้วสิทธิ์จะต่อจากวันหมดอายุเดิม เรียนได้ถึงประมาณ <span class="font-bold">{{ newExpiry }}</span>
             </p>
@@ -58,14 +99,13 @@
         </div>
 
         <footer v-if="!pending && plans.length" class="shrink-0 border-t border-slate-100 p-4">
-          <button
-            type="button"
+          <button type="button"
             class="flex w-full items-center justify-center gap-2 rounded-full bg-orange-500 px-5 py-3 text-sm font-bold text-white shadow-md shadow-orange-200 transition hover:bg-orange-600 disabled:bg-slate-300 disabled:shadow-none"
-            :disabled="!chosen || going"
-            @click="goCheckout"
-          >
-            <span v-if="!going && chosen && renewalCoupon" class="text-white/70 line-through">{{ formatBaht(chosen.effective_price) }}</span>
-            {{ going ? 'กำลังไปหน้าชำระเงิน...' : chosen ? `ไปชำระเงิน ${formatBaht(renewalCoupon?.total ?? chosen.effective_price)}` : 'เลือกแพ็กเกจก่อน' }}
+            :disabled="!chosen || going" @click="goCheckout">
+            <span v-if="!going && chosen && renewalCoupon" class="text-white/70 line-through">{{
+              formatBaht(chosen.effective_price) }}</span>
+            {{ going ? 'กำลังไปหน้าชำระเงิน...' : chosen ? `ไปชำระเงิน ${formatBaht(renewalCoupon?.total ??
+              chosen.effective_price)}` : 'เลือกแพ็กเกจก่อน' }}
             <LearnIcon v-if="!going" name="arrow" class="h-4 w-4" />
           </button>
         </footer>
@@ -102,6 +142,14 @@ interface RenewalQuote {
   total: number
   coupon: AppliedCoupon | null
 }
+
+const CONFETTI = [
+  { color: 'bg-rose-400', x: '-14px', y: '-12px' },
+  { color: 'bg-amber-400', x: '14px', y: '-14px' },
+  { color: 'bg-sky-400', x: '-16px', y: '8px' },
+  { color: 'bg-emerald-400', x: '16px', y: '10px' },
+  { color: 'bg-violet-400', x: '0px', y: '-18px' },
+]
 
 const ITEM_TYPES: Record<ClassroomItem['kind'], string> = { course: 'course', curriculum: 'curriculum', exam: 'exam' }
 const renewalCoupon = ref<{ code: string, description: string | null, discount: number, total: number } | null>(null)
@@ -175,3 +223,153 @@ onMounted(() => {
 })
 onUnmounted(() => document.removeEventListener('keydown', onKeydown))
 </script>
+
+<style scoped>
+.deal-enter-active {
+  animation: deal-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.deal-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.deal-leave-to {
+  opacity: 0;
+  transform: scale(0.96);
+}
+
+.deal-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px rgb(249 115 22 / 0.45);
+  opacity: 0;
+  animation: deal-glow 2.4s ease-in-out 0.6s infinite;
+}
+
+.deal-shine {
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.85), transparent);
+  transform: skewX(-20deg);
+  animation: deal-shine 2.8s ease-in-out 0.4s infinite;
+}
+
+.deal-emoji {
+  display: inline-block;
+  animation: deal-tada 1s ease 0.2s both;
+}
+
+.deal-confetti {
+  opacity: 0;
+  animation: deal-burst 0.9s ease-out 0.25s both;
+}
+
+.deal-amount {
+  animation: deal-bump 0.5s ease 0.45s both;
+}
+
+@keyframes deal-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes deal-glow {
+
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes deal-shine {
+  0% {
+    inset-inline-start: -50%;
+  }
+
+  45%,
+  100% {
+    inset-inline-start: 120%;
+  }
+}
+
+@keyframes deal-tada {
+  0% {
+    transform: scale(0.6) rotate(0);
+  }
+
+  30% {
+    transform: scale(1.25) rotate(-12deg);
+  }
+
+  50% {
+    transform: scale(1.15) rotate(10deg);
+  }
+
+  70% {
+    transform: scale(1.2) rotate(-6deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes deal-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.4);
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(var(--x), var(--y)) scale(1);
+  }
+}
+
+@keyframes deal-bump {
+  0% {
+    transform: scale(0.7);
+  }
+
+  60% {
+    transform: scale(1.15);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .deal-enter-active,
+  .deal-card::after,
+  .deal-shine,
+  .deal-emoji,
+  .deal-confetti,
+  .deal-amount {
+    animation: none;
+  }
+
+  .deal-shine,
+  .deal-confetti {
+    display: none;
+  }
+}
+</style>

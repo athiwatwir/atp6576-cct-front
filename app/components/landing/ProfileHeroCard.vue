@@ -43,75 +43,93 @@
         </NuxtLink>
       </div>
 
-      <div class="mt-3">
-        <form v-if="editingNickname" class="flex max-w-md flex-wrap items-center gap-2" @submit.prevent="saveNickname">
-          <label class="min-w-0 flex-1">
-            <span class="sr-only">ชื่อเล่น</span>
-            <input
-              ref="nicknameInput"
-              v-model="nicknameDraft"
-              maxlength="30"
-              placeholder="เช่น น้องเก่ง"
-              class="w-full rounded-full border border-orange-200 bg-orange-50/50 px-4 py-2 text-lg font-extrabold text-slate-900 outline-none focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-100"
-              @keydown.esc="cancelNickname"
-            >
-          </label>
-          <button type="submit" class="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 disabled:bg-slate-300" :disabled="nicknamePending">
-            {{ nicknamePending ? 'กำลังบันทึก...' : 'บันทึก' }}
-          </button>
-          <button type="button" class="rounded-full px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100" @click="cancelNickname">ยกเลิก</button>
-        </form>
+      <div class="mt-3 grid gap-5 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+        <div class="min-w-0">
+          <div>
+            <form v-if="editingNickname" class="flex max-w-md flex-wrap items-center gap-2" @submit.prevent="saveNickname">
+              <label class="min-w-0 flex-1">
+                <span class="sr-only">ชื่อเล่น</span>
+                <input
+                  ref="nicknameInput"
+                  v-model="nicknameDraft"
+                  maxlength="30"
+                  placeholder="เช่น น้องเก่ง"
+                  class="w-full rounded-full border border-orange-200 bg-orange-50/50 px-4 py-2 text-lg font-extrabold text-slate-900 outline-none focus:border-orange-400 focus:bg-white focus:ring-2 focus:ring-orange-100"
+                  @keydown.esc="cancelNickname"
+                >
+              </label>
+              <button type="submit" class="rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white hover:bg-orange-600 disabled:bg-slate-300" :disabled="nicknamePending">
+                {{ nicknamePending ? 'กำลังบันทึก...' : 'บันทึก' }}
+              </button>
+              <button type="button" class="rounded-full px-3 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100" @click="cancelNickname">ยกเลิก</button>
+            </form>
 
-        <div v-else class="flex flex-wrap items-center gap-2">
-          <h1 class="text-2xl font-extrabold leading-tight text-slate-900 md:text-3xl">{{ displayName }}</h1>
-          <button
-            type="button"
-            class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition"
-            :class="user?.nickname ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' : 'bg-orange-50 text-orange-600 ring-1 ring-orange-200 hover:bg-orange-100'"
-            @click="startNickname"
-          >
-            <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M4 20h4L19 9l-4-4L4 16v4Z" />
-              <path d="m13.5 6.5 4 4" />
-            </svg>
-            {{ user?.nickname ? 'แก้ชื่อเล่น' : 'ตั้งชื่อเล่น' }}
-          </button>
+            <div v-else class="flex flex-wrap items-center gap-2">
+              <h1 class="text-2xl font-extrabold leading-tight text-slate-900 md:text-3xl">{{ displayName }}</h1>
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold transition"
+                :class="user?.nickname ? 'text-slate-400 hover:bg-slate-100 hover:text-slate-600' : 'bg-orange-50 text-orange-600 ring-1 ring-orange-200 hover:bg-orange-100'"
+                @click="startNickname"
+              >
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 20h4L19 9l-4-4L4 16v4Z" />
+                  <path d="m13.5 6.5 4 4" />
+                </svg>
+                {{ user?.nickname ? 'แก้ชื่อเล่น' : 'ตั้งชื่อเล่น' }}
+              </button>
+            </div>
+
+            <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
+              <span v-if="user?.nickname">{{ user.name }}</span>
+              <span v-if="user?.school_name" class="inline-flex items-center gap-1">
+                <LearnIcon name="location" class="h-4 w-4 text-orange-500" />
+                {{ user.school_name }}
+              </span>
+            </p>
+            <p class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+              <span v-if="user?.email" class="inline-flex min-w-0 items-center gap-1">
+                <LearnIcon name="mail" class="h-4 w-4 shrink-0 text-sky-500" />
+                <span class="truncate">{{ user.email }}</span>
+              </span>
+              <span class="inline-flex items-center gap-1">
+                <LearnIcon name="phone" class="h-4 w-4 shrink-0 text-emerald-500" />
+                <span v-if="user?.phone">{{ user.phone }}</span>
+                <NuxtLink v-else to="/profile" class="font-semibold text-orange-600 hover:underline">เพิ่มเบอร์โทร</NuxtLink>
+              </span>
+              <button
+                type="button"
+                class="inline-flex h-7 items-center gap-1.5 rounded-full bg-violet-50 px-3 text-xs font-bold text-violet-700 ring-1 ring-violet-100 transition hover:bg-violet-100"
+                @click="passwordOpen = true"
+              >
+                <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="4" y="10" width="16" height="10" rx="2" />
+                  <path d="M8 10V7a4 4 0 0 1 8 0v3" />
+                </svg>
+                ดูรหัสผ่าน
+              </button>
+            </p>
+            <PasswordRevealModal v-if="passwordOpen" :email="user?.email" @close="passwordOpen = false" />
+            <p class="mt-2 max-w-xl text-sm text-slate-600">{{ cheer }}</p>
+
+            <p v-if="message" class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold" :class="messageError ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'">
+              {{ message }}
+            </p>
+          </div>
+
+          <dl class="mt-5 grid grid-cols-3 divide-x divide-slate-100 rounded-2xl bg-slate-50 py-3 text-center ring-1 ring-slate-100 sm:max-w-md">
+            <div v-for="stat in stats" :key="stat.label" class="px-2">
+              <dd class="text-2xl font-extrabold" :class="stat.valueClass">{{ stat.value }}</dd>
+              <dt class="mt-0.5 flex items-center justify-center gap-1 text-xs font-bold text-slate-500">
+                <LearnIcon :name="stat.icon" class="h-3.5 w-3.5" :class="stat.iconClass" />
+                {{ stat.label }}
+              </dt>
+            </div>
+          </dl>
         </div>
 
-        <p class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-500">
-          <span v-if="user?.nickname">{{ user.name }}</span>
-          <span v-if="user?.school_name" class="inline-flex items-center gap-1">
-            <LearnIcon name="location" class="h-4 w-4 text-orange-500" />
-            {{ user.school_name }}
-          </span>
-        </p>
-        <p class="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
-          <span v-if="user?.email" class="inline-flex min-w-0 items-center gap-1">
-            <LearnIcon name="mail" class="h-4 w-4 shrink-0 text-sky-500" />
-            <span class="truncate">{{ user.email }}</span>
-          </span>
-          <span class="inline-flex items-center gap-1">
-            <LearnIcon name="phone" class="h-4 w-4 shrink-0 text-emerald-500" />
-            <span v-if="user?.phone">{{ user.phone }}</span>
-            <NuxtLink v-else to="/profile" class="font-semibold text-orange-600 hover:underline">เพิ่มเบอร์โทร</NuxtLink>
-          </span>
-        </p>
-        <p class="mt-2 max-w-xl text-sm text-slate-600">{{ cheer }}</p>
-
-        <p v-if="message" class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold" :class="messageError ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'">
-          {{ message }}
-        </p>
+        <LearningProgressPanel :courses="user?.learning?.courses ?? []" />
       </div>
-
-      <dl class="mt-5 grid grid-cols-3 divide-x divide-slate-100 rounded-2xl bg-slate-50 py-3 text-center ring-1 ring-slate-100 sm:max-w-md">
-        <div v-for="stat in stats" :key="stat.label" class="px-2">
-          <dd class="text-2xl font-extrabold" :class="stat.valueClass">{{ stat.value }}</dd>
-          <dt class="mt-0.5 flex items-center justify-center gap-1 text-xs font-bold text-slate-500">
-            <LearnIcon :name="stat.icon" class="h-3.5 w-3.5" :class="stat.iconClass" />
-            {{ stat.label }}
-          </dt>
-        </div>
-      </dl>
     </div>
   </section>
 </template>
@@ -201,6 +219,8 @@ async function saveNickname() {
     nicknamePending.value = false
   }
 }
+
+const passwordOpen = ref(false)
 
 onBeforeUnmount(clearPreview)
 </script>
