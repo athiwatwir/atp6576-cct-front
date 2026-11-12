@@ -37,7 +37,8 @@
         <div>
           <h1 class="text-3xl font-extrabold text-slate-900">{{ user.name }}</h1>
           <p class="mt-1 text-sm text-slate-600">
-            โรงเรียน: {{ user.school_name || 'ยังไม่ได้ระบุโรงเรียน' }}<template v-if="user.school_province"> · จ.{{ user.school_province }}</template>
+            โรงเรียน: {{ user.school_name || 'ยังไม่ได้ระบุโรงเรียน' }}<template v-if="user.school_province"> · จ.{{
+              user.school_province }}</template>
           </p>
           <p v-if="avatarMessage" class="mt-2 inline-flex rounded-full px-3 py-1 text-xs font-bold"
             :class="avatarError ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'">
@@ -52,9 +53,13 @@
 
       <form class="rounded-3xl bg-white p-5 shadow-sm ring-1 ring-slate-100 md:p-6" @submit.prevent="saveProfile">
         <h2 class="text-xl font-extrabold text-slate-900">แก้ไขโปรไฟล์</h2>
+        <p class="mt-1 text-xs text-slate-500">ช่องที่มีเครื่องหมาย
+          <RequiredMark /> ต้องกรอก
+        </p>
         <div class="mt-5 grid gap-4 sm:grid-cols-2">
           <label class="block text-sm font-semibold text-slate-700">
             ชื่อ-นามสกุล
+            <RequiredMark />
             <input v-model="form.name" required maxlength="150"
               class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
@@ -63,31 +68,47 @@
             <input v-model="form.nickname" maxlength="30" placeholder="เช่น น้องเก่ง"
               class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
           </label>
+          <p class="-mb-2 text-xs text-slate-500 sm:col-span-2">
+            อีเมลหรือเบอร์โทร <RequiredMark /> กรอกอย่างน้อยหนึ่งอย่าง ใช้เป็นชื่อเข้าสู่ระบบได้ทั้งสองแบบ
+          </p>
           <label class="block text-sm font-semibold text-slate-700">
             อีเมล
-            <input v-model="form.email" type="email" required
-              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.email" type="email" inputmode="email" autocomplete="email" maxlength="255"
+              placeholder="name@example.com" :aria-invalid="Boolean(shownEmailError)"
+              aria-describedby="profile-email-error" @blur="touched.email = true"
+              class="mt-1 w-full rounded-2xl border px-4 py-3 font-normal outline-none focus:ring-2"
+              :class="shownEmailError ? 'border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'">
+            <span v-if="shownEmailError" id="profile-email-error" class="mt-1 block text-xs font-semibold text-rose-600">{{ shownEmailError }}</span>
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             เบอร์โทร
-            <input v-model="form.phone" type="tel" maxlength="30"
-              class="mt-1 w-full rounded-2xl border border-slate-200 px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <input v-model="form.phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="30"
+              placeholder="081-234-5678" :aria-invalid="Boolean(shownPhoneError)"
+              aria-describedby="profile-phone-error" @blur="touched.phone = true"
+              class="mt-1 w-full rounded-2xl border px-4 py-3 font-normal outline-none focus:ring-2"
+              :class="shownPhoneError ? 'border-rose-300 bg-rose-50/40 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-blue-400 focus:ring-blue-100'">
+            <span v-if="shownPhoneError" id="profile-phone-error" class="mt-1 block text-xs font-semibold text-rose-600">{{ shownPhoneError }}</span>
           </label>
           <label class="block scroll-mt-32 text-sm font-semibold text-slate-700"
             :class="highlightSchool ? 'rounded-2xl bg-amber-50 p-3 ring-2 ring-amber-300' : ''">
             โรงเรียน
-            <input ref="schoolEl" v-model="form.school_name" maxlength="255" placeholder="เช่น โรงเรียนอนุบาลเชียงใหม่"
+            <RequiredMark />
+            <input ref="schoolEl" v-model="form.school_name" required maxlength="255"
+              placeholder="เช่น โรงเรียนอนุบาลเชียงใหม่"
               class="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
             <span v-if="highlightSchool" class="mt-1 block text-xs font-normal text-amber-700">กรอกชื่อโรงเรียน แล้วกด
               "บันทึกโปรไฟล์" ด้านล่าง</span>
           </label>
           <label class="block text-sm font-semibold text-slate-700">
             จังหวัดที่เรียน
-            <select v-model="form.school_province"
+            <RequiredMark />
+            <select v-model="form.school_province" required
               class="mt-1 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 font-normal outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               :class="form.school_province ? 'text-slate-800' : 'text-slate-400'">
               <option value="">เลือกจังหวัดที่โรงเรียนตั้งอยู่</option>
-              <option v-for="province in thaiProvinces" :key="province" :value="province" class="text-slate-800">{{ province }}</option>
+              <option v-for="province in thaiProvinces" :key="province" :value="province" class="text-slate-800">{{
+                province
+                }}</option>
             </select>
           </label>
 
@@ -256,7 +277,7 @@ watch(user, (value) => {
   if (!value || filled.value) return
   form.name = value.name
   form.nickname = value.nickname ?? ''
-  form.email = value.email
+  form.email = value.email ?? ''
   form.phone = value.phone ?? ''
   form.school_name = value.school_name ?? ''
   form.school_province = value.school_province ?? ''
@@ -324,9 +345,53 @@ async function onAvatar(event: Event) {
 
 onBeforeUnmount(clearPreview)
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+const touched = reactive({ email: false, phone: false })
+const submitted = ref(false)
+/** error จาก API เช่น อีเมลหรือเบอร์ซ้ำกับบัญชีอื่น ล้างเมื่อแก้ช่องนั้น */
+const serverErrors = reactive({ email: '', phone: '' })
+
+watch(() => form.email, () => { serverErrors.email = '' })
+watch(() => form.phone, () => { serverErrors.phone = '' })
+
+/** แปลงแบบเดียวกับ backend (App\Support\Phone): เหลือแต่ตัวเลข และ +66 เป็น 0 นำหน้า */
+function normalizePhone(value: string) {
+  const digits = value.replace(/\D+/g, '')
+  return digits.startsWith('66') && (digits.length === 10 || digits.length === 11) ? `0${digits.slice(2)}` : digits
+}
+
+const emailError = computed(() => {
+  if (serverErrors.email) return serverErrors.email
+  const value = form.email.trim()
+  if (!value) return form.phone.trim() ? '' : 'กรอกอีเมลหรือเบอร์โทรอย่างน้อยหนึ่งอย่าง'
+  return EMAIL_PATTERN.test(value) ? '' : 'รูปแบบอีเมลไม่ถูกต้อง เช่น name@example.com'
+})
+
+const phoneError = computed(() => {
+  if (serverErrors.phone) return serverErrors.phone
+  const value = form.phone.trim()
+  if (!value) return ''
+  if (!/^[0-9+\-\s().]+$/.test(value)) return 'เบอร์โทรใช้ได้เฉพาะตัวเลข ขีด หรือเว้นวรรค'
+  const digits = normalizePhone(value)
+  const valid = digits.startsWith('0') ? digits.length === 9 || digits.length === 10 : digits.length >= 9 && digits.length <= 15
+  return valid ? '' : 'เบอร์โทรไม่ถูกต้อง เช่น 081-234-5678 หรือ 02-123-4567'
+})
+
+const shownEmailError = computed(() => (touched.email || submitted.value || serverErrors.email ? emailError.value : ''))
+const shownPhoneError = computed(() => (touched.phone || submitted.value || serverErrors.phone ? phoneError.value : ''))
+
 async function saveProfile() {
   profileError.value = ''
   profileSuccess.value = ''
+  submitted.value = true
+  if (emailError.value || phoneError.value) {
+    profileError.value = 'ตรวจสอบอีเมลและเบอร์โทรอีกครั้ง'
+    return
+  }
+  if (!form.school_name.trim() || !form.school_province) {
+    profileError.value = 'กรุณากรอกโรงเรียนและเลือกจังหวัดที่เรียน'
+    return
+  }
   if (form.postal_code.trim() && !/^\d{5}$/.test(form.postal_code.trim())) {
     profileError.value = 'รหัสไปรษณีย์ต้องเป็นตัวเลข 5 หลัก'
     return
@@ -336,7 +401,7 @@ async function saveProfile() {
     await updateProfile({
       name: form.name.trim(),
       nickname: form.nickname.trim() || null,
-      email: form.email.trim(),
+      email: form.email.trim() || null,
       phone: form.phone.trim() || null,
       school_name: form.school_name.trim() || null,
       school_province: form.school_province || null,
@@ -347,9 +412,16 @@ async function saveProfile() {
       postal_code: form.postal_code.trim() || null,
     })
     profileSuccess.value = 'บันทึกโปรไฟล์แล้ว'
+    submitted.value = false
+    touched.email = false
+    touched.phone = false
   }
   catch (error: unknown) {
-    profileError.value = apiErrorMessage(error, 'บันทึกโปรไฟล์ไม่สำเร็จ')
+    serverErrors.email = apiFieldError(error, 'email')
+    serverErrors.phone = apiFieldError(error, 'phone')
+    profileError.value = serverErrors.email || serverErrors.phone
+      ? 'ตรวจสอบอีเมลและเบอร์โทรอีกครั้ง'
+      : apiErrorMessage(error, 'บันทึกโปรไฟล์ไม่สำเร็จ')
   }
   finally {
     profilePending.value = false

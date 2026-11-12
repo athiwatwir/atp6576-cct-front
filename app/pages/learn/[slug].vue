@@ -387,7 +387,7 @@ interface LessonStep {
 
 const stageEl = ref<HTMLElement | null>(null)
 const isFullscreen = ref(false)
-const watermark = computed(() => (user.value ? `${user.value.email} · #${user.value.id}` : ''))
+const watermark = computed(() => (user.value ? `${user.value.email || user.value.phone || user.value.name} · #${user.value.id}` : ''))
 let pendingSeek: number | null = null
 let retriedVideoId: number | null = null
 

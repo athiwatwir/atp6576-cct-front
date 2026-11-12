@@ -34,7 +34,8 @@ export interface StudentUser {
   id: number
   name: string
   nickname?: string | null
-  email: string
+  /** บัญชีที่สมัครด้วยเบอร์โทรอย่างเดียวไม่มีอีเมล */
+  email: string | null
   phone?: string | null
   school_name?: string | null
   /** จังหวัดที่เรียน แยกจากจังหวัดในที่อยู่ */
@@ -54,7 +55,8 @@ export interface StudentUser {
 export interface ProfileInput {
   name: string
   nickname?: string | null
-  email: string
+  /** ต้องมีอีเมลหรือเบอร์โทรอย่างน้อยหนึ่งอย่าง */
+  email: string | null
   phone?: string | null
   school_name?: string | null
   /** ไม่ส่ง (undefined) ค่าเดิมไม่เปลี่ยน */
@@ -211,7 +213,7 @@ export function useAuth() {
       const form = new FormData()
       form.set('name', payload.name)
       if (payload.nickname !== undefined) form.set('nickname', payload.nickname ?? '')
-      form.set('email', payload.email)
+      form.set('email', payload.email ?? '')
       form.set('phone', payload.phone ?? '')
       form.set('school_name', payload.school_name ?? '')
       if (payload.school_province !== undefined) form.set('school_province', payload.school_province ?? '')
@@ -229,7 +231,7 @@ export function useAuth() {
         body: {
           name: payload.name,
           ...(payload.nickname !== undefined ? { nickname: payload.nickname || null } : {}),
-          email: payload.email,
+          email: payload.email || null,
           phone: payload.phone || null,
           school_name: payload.school_name || null,
           ...(payload.school_province !== undefined ? { school_province: payload.school_province || null } : {}),
