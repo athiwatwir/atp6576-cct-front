@@ -11,5 +11,4 @@ export const contactInfo = {
   lineId,
   lineUrl: `https://line.me/R/ti/p/${encodeURIComponent(lineId)}`,
   mapUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
-  mapEmbedUrl: `https://www.google.com/maps?q=${encodeURIComponent(address)}&z=15&output=embed`,
 }

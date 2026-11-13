@@ -10,17 +10,14 @@
           <p class="mt-1 text-sm text-slate-500">{{ description }}</p>
         </div>
       </div>
-      <NuxtLink v-if="purchasable" to="/cart"
-        class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue-50 px-3 py-2 text-sm font-bold text-blue-700">
-        <LearnIcon name="cart" class="h-4 w-4" />
-        รายการที่เลือก ({{ count }})
-      </NuxtLink>
+
     </div>
 
     <slot name="toolbar" />
 
     <div v-if="pending" class="grid gap-4 sm:grid-cols-2" :class="gridColumns">
-      <div v-for="index in columns" :key="index" class="h-72 animate-pulse rounded-3xl bg-white ring-1 ring-slate-100" />
+      <div v-for="index in columns" :key="index"
+        class="h-72 animate-pulse rounded-3xl bg-white ring-1 ring-slate-100" />
     </div>
     <p v-else-if="failed" class="rounded-3xl bg-white p-6 text-sm text-slate-500 ring-1 ring-slate-100">
       โหลดรายการไม่สำเร็จ ลองรีเฟรชหน้าอีกครั้ง</p>
@@ -33,11 +30,13 @@
     <div v-else class="space-y-10">
       <section v-for="group in groups" :key="group.key" :aria-label="group.title || undefined">
         <div v-if="group.title" class="mb-4 flex items-center gap-3">
-          <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-200">
+          <span
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-200">
             <LearnIcon name="course" class="h-5 w-5" />
           </span>
           <h2 class="text-xl font-extrabold text-slate-900 md:text-2xl">{{ group.title }}</h2>
-          <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">{{ group.items.length }} รายการ</span>
+          <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700">{{ group.items.length }}
+            รายการ</span>
           <span class="h-px min-w-6 flex-1 bg-slate-200" aria-hidden="true" />
           <button v-if="group.key" type="button"
             class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm font-bold text-blue-700 transition hover:bg-blue-50"
@@ -53,9 +52,11 @@
               <div class="relative aspect-[4/3] shrink-0 overflow-hidden bg-sky-50">
                 <img v-if="item.thumbnail_url" :src="item.thumbnail_url" :alt="item.name"
                   class="h-full w-full object-cover">
-                <div v-else class="flex h-full items-center justify-center text-5xl" aria-hidden="true">{{ item.item_type
-                  === 'exam' ? '📝' : '📘' }}</div>
-                <div v-if="item.is_featured || item.is_trial_available" class="absolute start-2 top-2 flex flex-wrap gap-1">
+                <div v-else class="flex h-full items-center justify-center text-5xl" aria-hidden="true">{{
+                  item.item_type
+                    === 'exam' ? '📝' : '📘' }}</div>
+                <div v-if="item.is_featured || item.is_trial_available"
+                  class="absolute start-2 top-2 flex flex-wrap gap-1">
                   <span v-if="item.is_featured"
                     class="rounded-full bg-amber-400 px-2.5 py-1 text-xs font-bold text-amber-950 shadow-sm">แนะนำ</span>
                   <span v-if="item.is_trial_available"
@@ -64,10 +65,11 @@
               </div>
               <div class="flex flex-1 flex-col p-4">
                 <p class="text-xs text-slate-400">{{ metaLine(item) }}</p>
-                <component :is="group.title ? 'h3' : 'h2'" class="mt-1 font-bold text-slate-800">{{ item.name }}</component>
+                <component :is="group.title ? 'h3' : 'h2'" class="mt-1 font-bold text-slate-800">{{ item.name }}
+                </component>
                 <p v-if="item.code" class="mt-1 text-xs text-slate-400">รหัส {{ item.code }}</p>
-              
-              
+
+
 
                 <div class="mt-auto pt-3">
                   <p v-if="item.sale_price && item.sale_price < item.price" class="text-xs text-slate-400 line-through">
@@ -103,7 +105,7 @@
                   @click="addCatalog(item, planOf(item.item_type, item.id))">
                   <LearnIcon name="cart" class="h-4 w-4 shrink-0" />
                   <span class="truncate">{{ inCart(item) ? 'เลือกแล้ว' : item.purchased ? 'ต่ออายุ' : 'เลือกรายการนี้'
-                    }}</span>
+                  }}</span>
                 </button>
               </template>
             </div>

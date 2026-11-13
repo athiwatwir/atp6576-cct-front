@@ -63,33 +63,49 @@
         </section>
       </article>
 
-      <aside v-if="othersPending || others.length" class="md:sticky md:top-32 md:self-start" aria-labelledby="others-title">
-        <h2 id="others-title" class="text-xl font-extrabold text-slate-900">บทความอื่นๆ</h2>
-        <div v-if="othersPending && !others.length" class="mt-4 space-y-3">
+      <aside v-if="suggestionsPending || suggestions.length" class="md:sticky md:top-32 md:self-start" aria-labelledby="suggested-title">
+        <h2 id="suggested-title" class="flex items-center gap-2 text-xl font-extrabold text-slate-900">
+          <span class="flex h-8 w-8 items-center justify-center rounded-xl bg-amber-100 text-amber-600">
+            <LearnIcon name="course" class="h-4 w-4" />
+          </span>
+          คอร์สเรียนแนะนำ
+        </h2>
+        <div v-if="suggestionsPending && !suggestions.length" class="mt-4 space-y-3">
           <div v-for="index in 3" :key="index" class="h-20 animate-pulse rounded-2xl bg-white ring-1 ring-slate-100" />
         </div>
         <ul v-else class="mt-4 space-y-3">
-          <li v-for="other in others" :key="other.id">
+          <li v-for="course in suggestions" :key="`${course.item_type}-${course.id}`">
             <NuxtLink
-              :to="`/articles/${other.slug}`"
-              class="group flex gap-3 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-100 transition hover:ring-blue-200"
+              :to="`/${course.item_type === 'curriculum' ? 'curriculums' : 'courses'}/${course.slug}`"
+              class="group flex gap-3 rounded-2xl bg-white p-2 shadow-sm ring-1 ring-slate-100 transition hover:-translate-y-0.5 hover:ring-blue-200"
             >
-              <span class="h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-sky-100">
-                <img v-if="other.image_url" :src="other.image_url" alt="" class="h-full w-full object-cover">
+              <span class="relative h-16 w-24 shrink-0 overflow-hidden rounded-xl bg-sky-100">
+                <img v-if="course.thumbnail_url" :src="course.thumbnail_url" :alt="course.name" class="h-full w-full object-cover" loading="lazy">
+                <LearnIcon v-else name="course" class="absolute inset-0 m-auto h-7 w-7 text-blue-300" />
+                <span v-if="course.is_featured" class="absolute start-1 top-1 rounded-full bg-amber-400 px-1.5 text-[10px] font-bold text-amber-950">แนะนำ</span>
               </span>
               <span class="min-w-0 py-0.5">
-                <span class="line-clamp-2 text-sm font-bold text-slate-800 group-hover:text-blue-700">{{ other.title }}</span>
-                <span v-if="other.published_at" class="mt-1 block text-xs text-slate-400">{{ publishedLabel(other.published_at) }}</span>
+                <span class="line-clamp-2 text-sm font-bold text-slate-800 group-hover:text-blue-700">{{ course.name }}</span>
+                <span class="mt-1 flex flex-wrap items-baseline gap-x-1.5 text-xs">
+                  <span v-if="course.sale_price && course.sale_price < course.price" class="text-slate-400 line-through">{{ formatBaht(course.price) }}</span>
+                  <span class="font-extrabold text-orange-600">{{ hasPlanChoice(course) ? `เริ่มต้น ${formatBaht(course.effective_price)}` : formatBaht(course.effective_price) }}</span>
+                </span>
               </span>
             </NuxtLink>
           </li>
         </ul>
+        <NuxtLink to="/courses" class="mt-3 inline-flex items-center gap-1 text-sm font-bold text-blue-700 hover:underline">
+          ดูคอร์สทั้งหมด
+          <LearnIcon name="arrow" class="h-3.5 w-3.5" />
+        </NuxtLink>
       </aside>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { hasPlanChoice, type CatalogItem } from '@/composables/useCart'
+
 definePageMeta({ layout: 'landing' })
 
 interface ArticleSummary {
@@ -123,7 +139,7 @@ interface ArticleDetail extends ArticleSummary {
   }
 }
 
-const otherLimit = 5
+const SUGGESTION_LIMIT = 5
 
 const route = useRoute()
 const { api } = useApi()
@@ -135,16 +151,22 @@ const { data, pending, error } = useLazyAsyncData(
   { watch: [slug] },
 )
 
-const { data: othersResponse, pending: othersPending } = useLazyAsyncData('article-others', () =>
-  api<{ data: ArticleSummary[] }>('/articles', { query: { per_page: otherLimit + 1 } }),
-)
+/** คอร์สและหลักสูตรที่ตั้งเป็นแนะนำ ถ้าไม่มีเลยใช้รายการล่าสุดแทน */
+const { data: suggestionResponse, pending: suggestionsPending } = useLazyAsyncData('article-suggested-courses', async () => {
+  const query = { type: 'course,curriculum', per_page: SUGGESTION_LIMIT + 6 }
+  const featured = await api<{ data: CatalogItem[] }>('/catalog', { query: { ...query, featured: 1 } })
+  return featured.data.length ? featured : api<{ data: CatalogItem[] }>('/catalog', { query })
+})
 
 const article = computed(() => data.value?.data ?? null)
 const failed = computed(() => Boolean(error.value))
 
-const others = computed(() =>
-  (othersResponse.value?.data ?? []).filter(other => other.slug !== slug.value).slice(0, otherLimit),
-)
+const suggestions = computed(() => {
+  const shown = new Set(related.value.map(item => `${item.kind}-${item.id}`))
+  return (suggestionResponse.value?.data ?? [])
+    .filter(course => !shown.has(`${course.item_type}-${course.id}`))
+    .slice(0, SUGGESTION_LIMIT)
+})
 
 const related = computed(() => {
   const groups = article.value?.related

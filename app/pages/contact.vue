@@ -55,51 +55,33 @@
         </li>
       </ul>
 
-      <div class="mt-8 grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div class="overflow-hidden rounded-3xl bg-white shadow-sm ring-1 ring-slate-100">
-          <iframe :src="contactInfo.mapEmbedUrl" title="แผนที่บริษัท" class="h-72 w-full border-0 md:h-96"
-            loading="lazy" referrerpolicy="no-referrer-when-downgrade" allowfullscreen />
-          <div class="flex flex-wrap items-start justify-between gap-3 p-5">
-            <div class="min-w-0">
-              <p class="font-extrabold text-slate-900">{{ contactInfo.company }}</p>
-              <p class="mt-1 text-sm leading-relaxed text-slate-600">{{ contactInfo.address }}</p>
-            </div>
-            <a :href="contactInfo.mapUrl" target="_blank" rel="noopener"
-              class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100">
-              <LearnIcon name="location" class="h-4 w-4" />
-              เปิดใน Google Maps
-            </a>
-          </div>
+      <div class="mt-8 grid gap-6 md:grid-cols-2">
+        <div class="rounded-3xl bg-amber-50 p-6 ring-1 ring-amber-100">
+          <h2 class="font-extrabold text-slate-900">เตรียมข้อมูลก่อนติดต่อ</h2>
+          <p class="mt-1 text-sm text-slate-600">ช่วยให้ทีมงานตอบได้เร็วขึ้น</p>
+          <ul class="mt-4 space-y-2.5 text-sm text-slate-700">
+            <li v-for="tip in tips" :key="tip" class="flex gap-2.5">
+              <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-extrabold text-white" aria-hidden="true">✓</span>
+              {{ tip }}
+            </li>
+          </ul>
         </div>
 
-        <div class="space-y-4">
-          <div class="rounded-3xl bg-amber-50 p-6 ring-1 ring-amber-100">
-            <h2 class="font-extrabold text-slate-900">เตรียมข้อมูลก่อนติดต่อ</h2>
-            <p class="mt-1 text-sm text-slate-600">ช่วยให้ทีมงานตอบได้เร็วขึ้น</p>
-            <ul class="mt-4 space-y-2.5 text-sm text-slate-700">
-              <li v-for="tip in tips" :key="tip" class="flex gap-2.5">
-                <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-400 text-[11px] font-extrabold text-white" aria-hidden="true">✓</span>
-                {{ tip }}
-              </li>
-            </ul>
-          </div>
-
-          <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
-            <h2 class="font-extrabold text-slate-900">ทำเองได้ทันที</h2>
-            <ul class="mt-4 space-y-2">
-              <li v-for="link in selfHelp" :key="link.to">
-                <NuxtLink :to="link.to" class="flex items-center gap-3 rounded-2xl px-3 py-2.5 transition hover:bg-slate-50">
-                  <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" :class="link.chip">
-                    <LearnIcon :name="link.icon" class="h-4 w-4" />
-                  </span>
-                  <span class="min-w-0">
-                    <span class="block text-sm font-bold text-slate-800">{{ link.label }}</span>
-                    <span class="block text-xs text-slate-500">{{ link.caption }}</span>
-                  </span>
-                </NuxtLink>
-              </li>
-            </ul>
-          </div>
+        <div class="rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-100">
+          <h2 class="font-extrabold text-slate-900">ทำเองได้ทันที</h2>
+          <ul class="mt-4 space-y-2">
+            <li v-for="link in selfHelp" :key="link.to">
+              <NuxtLink :to="link.to" class="flex items-center gap-3 rounded-2xl px-3 py-2.5 transition hover:bg-slate-50">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" :class="link.chip">
+                  <LearnIcon :name="link.icon" class="h-4 w-4" />
+                </span>
+                <span class="min-w-0">
+                  <span class="block text-sm font-bold text-slate-800">{{ link.label }}</span>
+                  <span class="block text-xs text-slate-500">{{ link.caption }}</span>
+                </span>
+              </NuxtLink>
+            </li>
+          </ul>
         </div>
       </div>
     </section>
@@ -139,7 +121,7 @@ const channels = [
   },
   {
     title: 'ที่ตั้งบริษัท',
-    detail: contactInfo.address,
+    detail: `${contactInfo.company} ${contactInfo.address}`,
     cta: 'ดูแผนที่',
     href: contactInfo.mapUrl,
     external: true,
